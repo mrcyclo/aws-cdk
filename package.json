@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@aws-cdk/aws-ec2": "^1.133.0",
+    "@aws-cdk/aws-elasticloadbalancingv2": "^1.133.0",
+    "@aws-cdk/aws-elasticloadbalancingv2-targets": "^1.133.0",
     "@aws-cdk/core": "1.133.0",
     "source-map-support": "^0.5.16"
   }

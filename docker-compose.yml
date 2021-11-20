@@ -4,5 +4,4 @@ services:
         build: .
         volumes:
           - .:/target
-        env_file:
-          - .env
+          - .aws:/root/.aws

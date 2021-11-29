@@ -1,3 +1,4 @@
+import { AutoScalingGroup } from "@aws-cdk/aws-autoscaling";
 import {
     AmazonLinuxGeneration,
     AmazonLinuxImage,
@@ -13,7 +14,6 @@ import {
     Vpc,
 } from "@aws-cdk/aws-ec2";
 import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
-import { InstanceIdTarget } from "@aws-cdk/aws-elasticloadbalancingv2-targets";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 
@@ -27,7 +27,7 @@ export class TrainingStack extends cdk.Stack {
         const vpc = new Vpc(this, "vpc", {
             cidr: "13.0.0.0/16",
             maxAzs: 2,
-            natGateways: 1,
+            natGateways: process.env.DEBUG ? 0 : 1,
             subnetConfiguration: [
                 {
                     subnetType: process.env.DEBUG
@@ -87,6 +87,34 @@ export class TrainingStack extends cdk.Stack {
         });
 
         // Webserver Instance
+        // const userData = UserData.forLinux();
+        // userData.addCommands(
+        //     "sudo -i",
+        //     "yum install -y httpd",
+        //     "systemctl start httpd",
+        //     "systemctl enable httpd",
+        //     'echo "<h1>Hello World!</h1>" > /var/www/html/index.html'
+        // );
+
+        // const webserverEc2 = new Instance(this, "webserver", {
+        //     vpc,
+        //     vpcSubnets: {
+        //         subnetType: process.env.DEBUG
+        //             ? SubnetType.PUBLIC
+        //             : SubnetType.PRIVATE_WITH_NAT,
+        //     },
+        //     instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
+        //     machineImage: new AmazonLinuxImage({
+        //         generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
+        //     }),
+        //     securityGroup: webserverSg,
+        //     keyName: "ec2-key-pair",
+        //     userData,
+        // });
+
+        /**
+         * Create Auto Scaling Group
+         */
         const userData = UserData.forLinux();
         userData.addCommands(
             "sudo -i",
@@ -95,21 +123,16 @@ export class TrainingStack extends cdk.Stack {
             "systemctl enable httpd",
             'echo "<h1>Hello World!</h1>" > /var/www/html/index.html'
         );
-
-        const webserverEc2 = new Instance(this, "webserver", {
+        const asg = new AutoScalingGroup(this, "asg", {
             vpc,
-            vpcSubnets: {
-                subnetType: process.env.DEBUG
-                    ? SubnetType.PUBLIC
-                    : SubnetType.PRIVATE_WITH_NAT,
-            },
             instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
             machineImage: new AmazonLinuxImage({
                 generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
             }),
             securityGroup: webserverSg,
-            keyName: "ec2-key-pair",
             userData,
+            minCapacity: 1,
+            maxCapacity: 5,
         });
 
         /**
@@ -121,6 +144,7 @@ export class TrainingStack extends cdk.Stack {
             securityGroup: albSg,
             vpcSubnets: {
                 subnetType: SubnetType.PUBLIC,
+                onePerAz: true,
             },
         });
 
@@ -130,12 +154,20 @@ export class TrainingStack extends cdk.Stack {
 
         listener.addTargets("alb-listener-target", {
             port: 80,
-            targets: [new InstanceIdTarget(webserverEc2.instanceId)],
-            stickinessCookieDuration: Duration.days(1),
+            // targets: [new InstanceIdTarget(webserverEc2.instanceId)],
+            targets: [asg],
+            // stickinessCookieDuration: Duration.days(1),
             healthCheck: {
                 healthyHttpCodes: "200",
                 path: "/",
             },
+        });
+
+        /**
+         * Dynamic scaling policy
+         */
+        asg.scaleOnRequestCount("request-count-scale", {
+            targetRequestsPerMinute: 1,
         });
     }
 }

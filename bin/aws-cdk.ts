@@ -6,4 +6,4 @@ import { TrainingStack } from "../lib/training-stack";
 
 const app = new cdk.App();
 
-new TrainingStack(app, "training-stack");
+new TrainingStack(app, "training-stack-2");

@@ -11,7 +11,7 @@ import {
     SecurityGroup,
     SubnetType,
     UserData,
-    Vpc
+    Vpc,
 } from "@aws-cdk/aws-ec2";
 import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
@@ -169,6 +169,7 @@ export class TrainingStack extends cdk.Stack {
         asg.scaleOnRequestCount("request-count-scale", {
             targetRequestsPerMinute: 1,
             estimatedInstanceWarmup: Duration.seconds(10),
+            cooldown: Duration.seconds(10),
         });
     }
 }

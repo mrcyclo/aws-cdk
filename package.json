@@ -22,10 +22,12 @@
   },
   "dependencies": {
     "@aws-cdk/aws-autoscaling": "^1.134.0",
+    "@aws-cdk/aws-codebuild": "^1.134.0",
     "@aws-cdk/aws-ec2": "^1.134.0",
     "@aws-cdk/aws-elasticloadbalancingv2": "^1.134.0",
     "@aws-cdk/aws-elasticloadbalancingv2-targets": "^1.134.0",
     "@aws-cdk/core": "1.134.0",
+    "moment": "^2.29.1",
     "source-map-support": "^0.5.16"
   }
 }

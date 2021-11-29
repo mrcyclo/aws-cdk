@@ -1,4 +1,5 @@
 import { AutoScalingGroup } from "@aws-cdk/aws-autoscaling";
+import { BuildSpec, Project } from "@aws-cdk/aws-codebuild";
 import {
     AmazonLinuxGeneration,
     AmazonLinuxImage,
@@ -16,6 +17,7 @@ import {
 import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
+import moment = require("moment");
 
 export class TrainingStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -111,6 +113,26 @@ export class TrainingStack extends cdk.Stack {
         //     keyName: "ec2-key-pair",
         //     userData,
         // });
+
+        /**
+         * Code build
+         */
+        const codebuild = new Project(this, "sample-project", {
+            buildSpec: BuildSpec.fromObject({
+                version: moment.utc().format("YYYYMMDDHHmmss"),
+                phases: {
+                    build: {
+                        commands: [
+                            "sudo -i",
+                            "yum install -y httpd",
+                            "systemctl start httpd",
+                            "systemctl enable httpd",
+                            'echo "<h1>Hello World!</h1>" > /var/www/html/index.html',
+                        ],
+                    },
+                },
+            }),
+        });
 
         /**
          * Create Auto Scaling Group

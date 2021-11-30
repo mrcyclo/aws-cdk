@@ -1,31 +1,24 @@
-import { AutoScalingGroup } from "@aws-cdk/aws-autoscaling";
-import { BuildSpec, Project } from "@aws-cdk/aws-codebuild";
+import { BuildSpec, Project, Source } from "@aws-cdk/aws-codebuild";
 import {
-    AmazonLinuxGeneration,
-    AmazonLinuxImage,
     Instance,
     InstanceClass,
     InstanceSize,
     InstanceType,
+    MachineImage,
     Peer,
     Port,
     SecurityGroup,
     SubnetType,
-    UserData,
-    Vpc,
+    Vpc
 } from "@aws-cdk/aws-ec2";
-import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
-import { Duration } from "@aws-cdk/core";
 import moment = require("moment");
 
 export class TrainingStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
-        /**
-         * Create VPC
-         */
+        // Create VPC
         const vpc = new Vpc(this, "vpc", {
             cidr: "13.0.0.0/16",
             maxAzs: 2,
@@ -46,152 +39,69 @@ export class TrainingStack extends cdk.Stack {
             ],
         });
 
-        /**
-         * Create Security Group
-         */
-        // Bastion SG
+        // Create bastion sg
         const bastionSg = new SecurityGroup(this, "bastion-sg", {
             vpc,
             allowAllOutbound: true,
         });
         bastionSg.addIngressRule(Peer.anyIpv4(), Port.tcp(22));
 
-        // ALB SG
-        const albSg = new SecurityGroup(this, "elb-sg", {
-            vpc,
-            allowAllOutbound: true,
-        });
-        albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
-
-        // Webserver SG
-        const webserverSg = new SecurityGroup(this, "webserver-sg", {
-            vpc,
-            allowAllOutbound: true,
-        });
-        webserverSg.connections.allowFrom(bastionSg, Port.tcp(22));
-        webserverSg.connections.allowFrom(albSg, Port.tcp(80));
-
-        /**
-         * Create EC2 Instance
-         */
-        // Bastion Instance
+        // Create bastion instance
         new Instance(this, "bastion", {
             vpc,
             vpcSubnets: {
                 subnetType: SubnetType.PUBLIC,
             },
             instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-            machineImage: new AmazonLinuxImage({
-                generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
-            }),
+            machineImage: MachineImage.latestAmazonLinux(),
             securityGroup: bastionSg,
             keyName: "ec2-key-pair",
         });
 
-        // Webserver Instance
-        // const userData = UserData.forLinux();
-        // userData.addCommands(
-        //     "sudo -i",
-        //     "yum install -y httpd",
-        //     "systemctl start httpd",
-        //     "systemctl enable httpd",
-        //     'echo "<h1>Hello World!</h1>" > /var/www/html/index.html'
-        // );
-
-        // const webserverEc2 = new Instance(this, "webserver", {
-        //     vpc,
-        //     vpcSubnets: {
-        //         subnetType: process.env.DEBUG
-        //             ? SubnetType.PUBLIC
-        //             : SubnetType.PRIVATE_WITH_NAT,
-        //     },
-        //     instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-        //     machineImage: new AmazonLinuxImage({
-        //         generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
-        //     }),
-        //     securityGroup: webserverSg,
-        //     keyName: "ec2-key-pair",
-        //     userData,
-        // });
-
-        /**
-         * Code build
-         */
-        const codebuild = new Project(this, "sample-project", {
+        // Create code build project
+        const version = moment.utc().format("YYYYMMDDHHmmss");
+        const webAmiName = `web-ami-${version}`;
+        new Project(this, "codebuild", {
+            vpc,
             buildSpec: BuildSpec.fromObject({
-                version: moment.utc().format("YYYYMMDDHHmmss"),
+                version: version,
                 phases: {
                     build: {
                         commands: [
                             "sudo -i",
-                            "yum install -y httpd",
-                            "systemctl start httpd",
-                            "systemctl enable httpd",
-                            'echo "<h1>Hello World!</h1>" > /var/www/html/index.html',
+                            "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
+                            "npm i -g aws-cdk",
+                            "cdk deploy ami-builder-stack --require-approval never",
+                            `export INSTANCE_ID = $(aws cloudformation describe-stacks --stack-name ami-builder-stack --output text --query="Stacks[0].Outputs[?OutputKey=='webinstanceid'].OutputValue")`,
+                            `export AMI_ID = $(aws ec2 create-image --instance-id $INSTANCE_ID --name $AMI_NAME --output text)`,
+                            "aws ec2 wait image-available --image-ids $AMI_ID",
+                            "cdk destroy ami-builder-stack --force",
+                            "cdk deploy codebuild-stack --require-approval never",
                         ],
                     },
                 },
             }),
-        });
-
-        /**
-         * Create Auto Scaling Group
-         */
-        const userData = UserData.forLinux();
-        userData.addCommands(
-            "sudo -i",
-            "yum install -y httpd",
-            "systemctl start httpd",
-            "systemctl enable httpd",
-            'echo "<h1>Hello World!</h1>" > /var/www/html/index.html'
-        );
-        const asg = new AutoScalingGroup(this, "asg", {
-            vpc,
-            instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-            machineImage: new AmazonLinuxImage({
-                generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
+            source: Source.gitHub({
+                owner: "mrcyclo",
+                repo: "aws-cdk",
             }),
-            securityGroup: webserverSg,
-            userData,
-            minCapacity: 1,
-            maxCapacity: 5,
-        });
+            environmentVariables: {
+                DEBUG: { value: process.env.DEBUG },
+                APP_ENV: { value: "codebuild" },
 
-        /**
-         * Create Application Load Balancer
-         */
-        const alb = new ApplicationLoadBalancer(this, "alb", {
-            vpc,
-            internetFacing: true,
-            securityGroup: albSg,
-            vpcSubnets: {
-                subnetType: SubnetType.PUBLIC,
-                onePerAz: true,
+                VPC_ID: { value: vpc.vpcId },
+                BASTION_SG_ID: { value: bastionSg.securityGroupId },
+                AMI_NAME: { value: webAmiName },
+
+                AWS_ACCESS_KEY_ID: { value: process.env.AWS_ACCESS_KEY_ID },
+                AWS_SECRET_ACCESS_KEY: {
+                    value: process.env.AWS_SECRET_ACCESS_KEY,
+                },
+                AWS_DEFAULT_REGION: { value: process.env.AWS_DEFAULT_REGION },
+
+                CDK_DEFAULT_ACCOUNT: { value: process.env.CDK_DEFAULT_ACCOUNT },
+                CDK_DEFAULT_REGION: { value: process.env.CDK_DEFAULT_REGION },
             },
-        });
-
-        const listener = alb.addListener("alb-listener", {
-            port: 80,
-        });
-
-        listener.addTargets("alb-listener-target", {
-            port: 80,
-            // targets: [new InstanceIdTarget(webserverEc2.instanceId)],
-            targets: [asg],
-            // stickinessCookieDuration: Duration.days(1),
-            healthCheck: {
-                healthyHttpCodes: "200",
-                path: "/",
-            },
-        });
-
-        /**
-         * Dynamic scaling policy
-         */
-        asg.scaleOnRequestCount("request-count-scale", {
-            targetRequestsPerMinute: 1,
-            estimatedInstanceWarmup: Duration.seconds(10),
-            cooldown: Duration.seconds(10),
         });
     }
 }

@@ -2,8 +2,7 @@ version: '3'
 services:
     cdk:
         build: .
-        environment:
-          - DEBUG=true
+        env_file:
+          - .env
         volumes:
           - .:/target
-          - .aws:/root/.aws

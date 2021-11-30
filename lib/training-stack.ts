@@ -69,6 +69,10 @@ export class TrainingStack extends cdk.Stack {
                     build: {
                         commands: [
                             "sudo -i",
+                            "yum install -y git",
+                            "mkdir /target",
+                            "cd /target",
+                            "git clone https://github.com/mrcyclo/aws-cdk.git .",
                             "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
                             "npm i -g aws-cdk",
                             "cdk deploy ami-builder-stack --require-approval never",
@@ -80,10 +84,6 @@ export class TrainingStack extends cdk.Stack {
                         ],
                     },
                 },
-            }),
-            source: Source.gitHub({
-                owner: "mrcyclo",
-                repo: "aws-cdk",
             }),
             environmentVariables: {
                 DEBUG: { value: process.env.DEBUG },

@@ -9,7 +9,7 @@
 
 ## Deploy cdk
 ```
-docker-compose run --rm --no-deps cdk deploy training-stack
+docker-compose run --rm --no-deps cdk cdk deploy training-stack
 ```
 
 ## Codebuild

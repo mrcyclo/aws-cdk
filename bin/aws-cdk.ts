@@ -3,18 +3,28 @@
 import * as cdk from "@aws-cdk/core";
 import "source-map-support/register";
 import { AmiBuilderStack } from "../lib/ami-builder-stack";
-import { CodeBuildStack } from "../lib/codebuild-stack";
+import { WebSystemStack } from "../lib/websystem-stack";
 import { TrainingStack } from "../lib/training-stack";
 
 const app = new cdk.App();
 
-switch (process.env.APP_ENV) {
-    case "local":
-        new TrainingStack(app, "training-stack");
-        break;
+new TrainingStack(app, "training-stack", {
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
+});
 
-    case "codebuild":
-        new CodeBuildStack(app, "codebuild-stack");
-        new AmiBuilderStack(app, "ami-builder-stack");
-        break;
-}
+new WebSystemStack(app, "websystem-stack", {
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
+});
+
+new AmiBuilderStack(app, "ami-builder-stack", {
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
+});

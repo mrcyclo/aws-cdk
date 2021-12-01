@@ -52,6 +52,7 @@ export class AmiBuilderStack extends cdk.Stack {
             securityGroup: bastionSg,
             keyName: "ec2-key-pair",
             userData,
+            instanceName: "web-instance",
         });
 
         // Create an Output

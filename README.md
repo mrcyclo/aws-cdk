@@ -1,14 +1,16 @@
-# Welcome to your CDK TypeScript project!
+# AWS CDK
+## Installation
+- Rename `.env.example` to `.env` and fill all variable in there.
+- Build docker container.
+    ```
+    docker-compose build cdk
+    docker-compose run --rm --no-deps cdk npm install
+    ```
 
-This is a blank project for TypeScript development with CDK.
+## Deploy cdk
+```
+docker-compose run --rm --no-deps cdk deploy training-stack
+```
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-## Useful commands
-
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+## Codebuild
+After cdk deployed, a new item will be show in your codebuild list. Run that and you will get a new web systems (ALB, ASG, AMI, ...)

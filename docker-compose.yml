@@ -3,6 +3,15 @@ services:
     cdk:
         build: .
         env_file:
-          - .env
+            - .env
         volumes:
-          - .:/target
+            - .:/target
+
+    codebuild:
+        build:
+            context: .
+            dockerfile: Dockerfile-codebuild
+        env_file:
+            - .env
+        volumes:
+            - .:/target

@@ -1,4 +1,4 @@
-import { BuildSpec, Project, Source } from "@aws-cdk/aws-codebuild";
+import { BuildSpec, Project } from "@aws-cdk/aws-codebuild";
 import {
     Instance,
     InstanceClass,
@@ -9,7 +9,7 @@ import {
     Port,
     SecurityGroup,
     SubnetType,
-    Vpc
+    Vpc,
 } from "@aws-cdk/aws-ec2";
 import * as cdk from "@aws-cdk/core";
 import moment = require("moment");
@@ -43,6 +43,7 @@ export class TrainingStack extends cdk.Stack {
         const bastionSg = new SecurityGroup(this, "bastion-sg", {
             vpc,
             allowAllOutbound: true,
+            securityGroupName: "bastion-sg",
         });
         bastionSg.addIngressRule(Peer.anyIpv4(), Port.tcp(22));
 
@@ -56,6 +57,7 @@ export class TrainingStack extends cdk.Stack {
             machineImage: MachineImage.latestAmazonLinux(),
             securityGroup: bastionSg,
             keyName: "ec2-key-pair",
+            instanceName: "bastion",
         });
 
         // Create code build project
@@ -70,24 +72,25 @@ export class TrainingStack extends cdk.Stack {
                         commands: [
                             "sudo -i",
                             "yum install -y git",
+                            `mkdir /tmp/aws-cli && cd /tmp/aws-cli && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install`,
                             "mkdir /target",
                             "cd /target",
                             "git clone https://github.com/mrcyclo/aws-cdk.git .",
                             "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
                             "npm i -g aws-cdk",
+                            "npm install",
                             "cdk deploy ami-builder-stack --require-approval never",
-                            `export INSTANCE_ID = $(aws cloudformation describe-stacks --stack-name ami-builder-stack --output text --query="Stacks[0].Outputs[?OutputKey=='webinstanceid'].OutputValue")`,
-                            `export AMI_ID = $(aws ec2 create-image --instance-id $INSTANCE_ID --name $AMI_NAME --output text)`,
+                            `export INSTANCE_ID=$(aws cloudformation describe-stacks --stack-name ami-builder-stack --output text --query="Stacks[0].Outputs[?OutputKey=='webinstanceid'].OutputValue")`,
+                            `export AMI_ID=$(aws ec2 create-image --instance-id $INSTANCE_ID --name $AMI_NAME --output text)`,
                             "aws ec2 wait image-available --image-ids $AMI_ID",
                             "cdk destroy ami-builder-stack --force",
-                            "cdk deploy codebuild-stack --require-approval never",
+                            "cdk deploy websystem-stack --require-approval never",
                         ],
                     },
                 },
             }),
             environmentVariables: {
                 DEBUG: { value: process.env.DEBUG },
-                APP_ENV: { value: "codebuild" },
 
                 VPC_ID: { value: vpc.vpcId },
                 BASTION_SG_ID: { value: bastionSg.securityGroupId },
@@ -102,6 +105,7 @@ export class TrainingStack extends cdk.Stack {
                 CDK_DEFAULT_ACCOUNT: { value: process.env.CDK_DEFAULT_ACCOUNT },
                 CDK_DEFAULT_REGION: { value: process.env.CDK_DEFAULT_REGION },
             },
+            projectName: "websystem-build",
         });
     }
 }

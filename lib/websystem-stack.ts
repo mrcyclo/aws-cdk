@@ -8,17 +8,18 @@ import {
     Port,
     SecurityGroup,
     SubnetType,
-    Vpc
+    Vpc,
 } from "@aws-cdk/aws-ec2";
 import {
     ApplicationLoadBalancer,
+    ApplicationProtocol,
     ListenerAction,
-    ListenerCertificate
+    ListenerCertificate,
 } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 
-export class CodeBuildStack extends cdk.Stack {
+export class WebSystemStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
@@ -39,9 +40,10 @@ export class CodeBuildStack extends cdk.Stack {
         );
 
         // Create Alb sg
-        const albSg = new SecurityGroup(this, "elb-sg", {
+        const albSg = new SecurityGroup(this, "alb-sg", {
             vpc,
             allowAllOutbound: true,
+            securityGroupName: "alb-sg",
         });
         albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
 
@@ -49,6 +51,7 @@ export class CodeBuildStack extends cdk.Stack {
         const webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
             vpc,
             allowAllOutbound: true,
+            securityGroupName: "web-instance-sg",
         });
         webInstanceSg.connections.allowFrom(bastionSg, Port.tcp(22));
         webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
@@ -83,7 +86,7 @@ export class CodeBuildStack extends cdk.Stack {
 
         httpListener.addAction("redirect-to-https", {
             action: ListenerAction.redirect({
-                protocol: "https",
+                protocol: ApplicationProtocol.HTTPS,
             }),
         });
 

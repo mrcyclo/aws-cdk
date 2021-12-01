@@ -58,5 +58,53 @@
   "security-group:account=903969887945:region=ap-southeast-1:securityGroupId=sg-0f9427a85acfbb45d": {
     "securityGroupId": "sg-0f9427a85acfbb45d",
     "allowAllOutbound": false
-  }
+  },
+  "vpc-provider:account=903969887945:filter.vpc-id=vpc-0160b6a90526bcb32:region=ap-southeast-1:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-0160b6a90526bcb32",
+    "vpcCidrBlock": "13.0.0.0/16",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "public-subnet",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-061b476e92f2e0920",
+            "cidr": "13.0.2.0/24",
+            "availabilityZone": "ap-southeast-1a",
+            "routeTableId": "rtb-0264499394ed53ffa"
+          },
+          {
+            "subnetId": "subnet-07de13d6f7f2b79ce",
+            "cidr": "13.0.3.0/24",
+            "availabilityZone": "ap-southeast-1b",
+            "routeTableId": "rtb-08b004a2400ac7e6c"
+          }
+        ]
+      },
+      {
+        "name": "private-subnet",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-07caa321ada1f7942",
+            "cidr": "13.0.0.0/24",
+            "availabilityZone": "ap-southeast-1a",
+            "routeTableId": "rtb-09bc3812c32dcab83"
+          },
+          {
+            "subnetId": "subnet-0f79eb4f4ed40f00d",
+            "cidr": "13.0.1.0/24",
+            "availabilityZone": "ap-southeast-1b",
+            "routeTableId": "rtb-02f995c5f420b3898"
+          }
+        ]
+      }
+    ]
+  },
+  "security-group:account=903969887945:region=ap-southeast-1:securityGroupId=sg-0347ebcc7c5e090b0": {
+    "securityGroupId": "sg-0347ebcc7c5e090b0",
+    "allowAllOutbound": false
+  },
+  "ami:account=903969887945:filters.image-type.0=machine:filters.name.0=web-ami-20211201105433:filters.state.0=available:region=ap-southeast-1": "ami-026bfd4f3134c085d"
 }

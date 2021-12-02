@@ -71,7 +71,11 @@ export class TrainingStack extends cdk.Stack {
                     install: {
                         commands: [
                             "yum install -y git curl unzip",
-                            `mkdir /tmp && cd /tmp && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install`,
+                            "mkdir /tmp",
+                            "cd /tmp",
+                            `curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"`,
+                            "unzip awscliv2.zip",
+                            "./aws/install",
                             "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
                             "npm i -g aws-cdk",
                         ],

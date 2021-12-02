@@ -65,6 +65,9 @@ export class TrainingStack extends cdk.Stack {
         const webAmiName = `web-ami-${version}`;
         new Project(this, "codebuild", {
             vpc,
+            subnetSelection: {
+                subnetType: SubnetType.PUBLIC,
+            },
             buildSpec: BuildSpec.fromObject({
                 version: "0.2",
                 phases: {

@@ -66,7 +66,7 @@ export class TrainingStack extends cdk.Stack {
         new Project(this, "codebuild", {
             vpc,
             buildSpec: BuildSpec.fromObject({
-                version: version,
+                version: '0.2',
                 phases: {
                     build: {
                         commands: [

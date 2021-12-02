@@ -1,4 +1,4 @@
-import { BuildSpec, Project } from "@aws-cdk/aws-codebuild";
+import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
 import {
     Instance,
     InstanceClass,
@@ -66,11 +66,10 @@ export class TrainingStack extends cdk.Stack {
         new Project(this, "codebuild", {
             vpc,
             buildSpec: BuildSpec.fromObject({
-                version: '0.2',
+                version: "0.2",
                 phases: {
                     build: {
                         commands: [
-                            "sudo -i",
                             "yum install -y git",
                             `mkdir /tmp/aws-cli && cd /tmp/aws-cli && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install`,
                             "mkdir /target",
@@ -89,6 +88,9 @@ export class TrainingStack extends cdk.Stack {
                     },
                 },
             }),
+            environment: {
+                buildImage: LinuxBuildImage.AMAZON_LINUX_2,
+            },
             environmentVariables: {
                 DEBUG: { value: process.env.DEBUG },
 

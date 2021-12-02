@@ -9,7 +9,7 @@ import {
     Port,
     SecurityGroup,
     SubnetType,
-    Vpc,
+    Vpc
 } from "@aws-cdk/aws-ec2";
 import * as cdk from "@aws-cdk/core";
 import moment = require("moment");
@@ -68,15 +68,17 @@ export class TrainingStack extends cdk.Stack {
             buildSpec: BuildSpec.fromObject({
                 version: "0.2",
                 phases: {
-                    build: {
+                    install: {
                         commands: [
                             "yum install -y git",
-                            `mkdir /tmp/aws-cli && cd /tmp/aws-cli && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install`,
-                            "mkdir /target",
-                            "cd /target",
-                            "git clone https://github.com/mrcyclo/aws-cdk.git .",
+                            `mkdir /tmp && cd /tmp && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install`,
                             "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
                             "npm i -g aws-cdk",
+                        ],
+                    },
+                    build: {
+                        commands: [
+                            "git clone https://github.com/mrcyclo/aws-cdk.git .",
                             "npm install",
                             "cdk deploy ami-builder-stack --require-approval never",
                             `export INSTANCE_ID=$(aws cloudformation describe-stacks --stack-name ami-builder-stack --output text --query="Stacks[0].Outputs[?OutputKey=='webinstanceid'].OutputValue")`,

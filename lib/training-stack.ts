@@ -73,11 +73,11 @@ export class TrainingStack extends cdk.Stack {
                 phases: {
                     install: {
                         commands: [
-                            "yum install -y git curl unzip",
-                            `curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"`,
-                            "unzip awscliv2.zip",
-                            "./aws/install",
-                            "rm -rf ./aws",
+                            "apt install -y git curl unzip",
+                            // `curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"`,
+                            // "unzip awscliv2.zip",
+                            // "./aws/install",
+                            // "rm -rf ./aws",
                             "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
                             "npm i -g aws-cdk",
                         ],
@@ -97,7 +97,8 @@ export class TrainingStack extends cdk.Stack {
                 },
             }),
             environment: {
-                buildImage: LinuxBuildImage.AMAZON_LINUX_2,
+                privileged: true,
+                buildImage: LinuxBuildImage.STANDARD_5_0,
             },
             environmentVariables: {
                 DEBUG: { value: process.env.DEBUG },

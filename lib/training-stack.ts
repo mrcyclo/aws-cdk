@@ -77,6 +77,7 @@ export class TrainingStack extends cdk.Stack {
                             "npm install",
                             "cdk deploy ami-builder-stack --require-approval never",
                             `export INSTANCE_ID=$(aws cloudformation describe-stacks --stack-name ami-builder-stack --output text --query="Stacks[0].Outputs[?OutputKey=='webinstanceid'].OutputValue")`,
+                            "export AMI_NAME=web-ami-$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)",
                             `export AMI_ID=$(aws ec2 create-image --instance-id $INSTANCE_ID --name $AMI_NAME --output text)`,
                             "aws ec2 wait image-available --image-ids $AMI_ID",
                             "cdk destroy ami-builder-stack --force",

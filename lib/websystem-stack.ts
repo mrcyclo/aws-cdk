@@ -44,7 +44,6 @@ export class WebSystemStack extends cdk.Stack {
         const albSg = new SecurityGroup(this, "alb-sg", {
             vpc,
             allowAllOutbound: true,
-            securityGroupName: "alb-sg",
         });
         albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
 
@@ -52,7 +51,6 @@ export class WebSystemStack extends cdk.Stack {
         const webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
             vpc,
             allowAllOutbound: true,
-            securityGroupName: "web-instance-sg",
         });
         webInstanceSg.connections.allowFrom(bastionSg, Port.tcp(22));
         webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));

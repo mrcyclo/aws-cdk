@@ -66,6 +66,7 @@ export class WebSystemStack extends cdk.Stack {
             securityGroup: webInstanceSg,
             minCapacity: 1,
             maxCapacity: 2,
+            keyName: "ec2-key-pair",
         });
 
         // Create Application Load Balancer

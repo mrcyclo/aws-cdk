@@ -69,7 +69,8 @@ export class TrainingStack extends cdk.Stack {
                 phases: {
                     install: {
                         commands: [
-                            "apt install -y git curl unzip nodejs",
+                            "apt update -y",
+                            "apt install -y git nodejs",
                             "npm i -g aws-cdk",
                         ],
                     },

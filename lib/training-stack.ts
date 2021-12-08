@@ -64,21 +64,12 @@ export class TrainingStack extends cdk.Stack {
         const version = moment.utc().format("YYYYMMDDHHmmss");
         const webAmiName = `web-ami-${version}`;
         new Project(this, "codebuild", {
-            vpc,
-            subnetSelection: {
-                subnetType: SubnetType.PUBLIC,
-            },
             buildSpec: BuildSpec.fromObject({
                 version: "0.2",
                 phases: {
                     install: {
                         commands: [
-                            "apt install -y git curl unzip",
-                            // `curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"`,
-                            // "unzip awscliv2.zip",
-                            // "./aws/install",
-                            // "rm -rf ./aws",
-                            "curl -sL https://rpm.nodesource.com/setup_14.x | bash && yum install -y nodejs",
+                            "apt install -y git curl unzip nodejs",
                             "npm i -g aws-cdk",
                         ],
                     },

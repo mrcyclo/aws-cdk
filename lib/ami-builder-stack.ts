@@ -11,6 +11,7 @@ import {
     Vpc
 } from "@aws-cdk/aws-ec2";
 import * as cdk from "@aws-cdk/core";
+import * as path from "path";
 
 export class AmiBuilderStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -33,13 +34,9 @@ export class AmiBuilderStack extends cdk.Stack {
 
         // Create web instance
         const userData = UserData.forLinux();
-        userData.addCommands(
-            "sudo -i",
-            "yum install -y httpd",
-            "systemctl start httpd",
-            "systemctl enable httpd",
-            'echo "<h1>Hello World!</h1>" > /var/www/html/index.html'
-        );
+        userData.addExecuteFileCommand({
+            filePath: path.join(__dirname, "ami-user-data.sh"),
+        });
 
         const webInstance = new Instance(this, "web-instance", {
             vpc,

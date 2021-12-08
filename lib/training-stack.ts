@@ -1,5 +1,6 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
 import {
+    AmazonLinuxGeneration,
     Instance,
     InstanceClass,
     InstanceSize,
@@ -53,7 +54,9 @@ export class TrainingStack extends cdk.Stack {
                 subnetType: SubnetType.PUBLIC,
             },
             instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-            machineImage: MachineImage.latestAmazonLinux(),
+            machineImage: MachineImage.latestAmazonLinux({
+                generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
+            }),
             securityGroup: bastionSg,
             keyName: "ec2-key-pair",
             instanceName: "bastion",

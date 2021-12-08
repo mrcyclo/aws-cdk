@@ -1,4 +1,5 @@
 import {
+    AmazonLinuxGeneration,
     Instance,
     InstanceClass,
     InstanceSize,
@@ -48,7 +49,9 @@ export class AmiBuilderStack extends cdk.Stack {
                     : SubnetType.PRIVATE_WITH_NAT,
             },
             instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-            machineImage: MachineImage.latestAmazonLinux(),
+            machineImage: MachineImage.latestAmazonLinux({
+                generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
+            }),
             securityGroup: bastionSg,
             keyName: "ec2-key-pair",
             userData,

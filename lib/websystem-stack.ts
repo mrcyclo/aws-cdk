@@ -121,14 +121,14 @@ export class WebSystemStack extends cdk.Stack {
         });
 
         // Change setting of Route53
-        const hostedZone = PublicHostedZone.fromPublicHostedZoneId(
-            this,
-            "hosted-zone",
-            "Z1006312LKA67UQB22AD"
-        );
-        new ARecord(this, "a-record", {
-            zone: hostedZone,
-            target: RecordTarget.fromAlias(new LoadBalancerTarget(alb)),
-        });
+        // const hostedZone = PublicHostedZone.fromPublicHostedZoneId(
+        //     this,
+        //     "hosted-zone",
+        //     "Z1006312LKA67UQB22AD"
+        // );
+        // new ARecord(this, "a-record", {
+        //     zone: hostedZone,
+        //     target: RecordTarget.fromAlias(new LoadBalancerTarget(alb)),
+        // });
     }
 }

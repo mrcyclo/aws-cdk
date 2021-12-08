@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sudo -i
 amazon-linux-extras enable php7.4 epel && yum clean metadata
 yum install -y unzip curl httpd php php-common php-pgsql php-curl php-gd php-mbstring php-xmlrpc php-intl php-zlib php-bcmath php-xml
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --filename=composer

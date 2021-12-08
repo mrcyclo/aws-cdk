@@ -8,18 +8,17 @@ import {
     Port,
     SecurityGroup,
     SubnetType,
-    Vpc,
+    Vpc
 } from "@aws-cdk/aws-ec2";
 import {
     ApplicationLoadBalancer,
     ApplicationProtocol,
     ListenerAction,
-    ListenerCertificate,
+    ListenerCertificate
 } from "@aws-cdk/aws-elasticloadbalancingv2";
-import { ARecord, PublicHostedZone, RecordTarget } from "@aws-cdk/aws-route53";
-import { LoadBalancerTarget } from "@aws-cdk/aws-route53-targets";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
+import moment = require("moment");
 
 export class WebSystemStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -27,7 +26,6 @@ export class WebSystemStack extends cdk.Stack {
 
         const vpcId = <string>process.env.VPC_ID;
         const bastionSgId = <string>process.env.BASTION_SG_ID;
-        const webAmiName = <string>process.env.AMI_NAME;
 
         // Import VPC
         const vpc = Vpc.fromLookup(this, "vpc", {
@@ -59,6 +57,9 @@ export class WebSystemStack extends cdk.Stack {
         webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
 
         // Create Auto Scaling Group
+        const version = moment.utc().format("YYYYMMDDHHmmss");
+        const webAmiName = `web-ami-${version}`;
+
         const asg = new AutoScalingGroup(this, "asg", {
             vpc: vpc,
             instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),

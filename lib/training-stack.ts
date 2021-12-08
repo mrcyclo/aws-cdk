@@ -12,7 +12,6 @@ import {
     Vpc
 } from "@aws-cdk/aws-ec2";
 import * as cdk from "@aws-cdk/core";
-import moment = require("moment");
 
 export class TrainingStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -61,8 +60,6 @@ export class TrainingStack extends cdk.Stack {
         });
 
         // Create code build project
-        const version = moment.utc().format("YYYYMMDDHHmmss");
-        const webAmiName = `web-ami-${version}`;
         new Project(this, "codebuild", {
             buildSpec: BuildSpec.fromObject({
                 version: "0.2",
@@ -97,7 +94,6 @@ export class TrainingStack extends cdk.Stack {
 
                 VPC_ID: { value: vpc.vpcId },
                 BASTION_SG_ID: { value: bastionSg.securityGroupId },
-                AMI_NAME: { value: webAmiName },
 
                 AWS_ACCESS_KEY_ID: { value: process.env.AWS_ACCESS_KEY_ID },
                 AWS_SECRET_ACCESS_KEY: {

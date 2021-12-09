@@ -12,14 +12,23 @@ import {
     SubnetType,
     Vpc
 } from "@aws-cdk/aws-ec2";
+import {
+    PolicyDocument,
+    PolicyStatement,
+    Role,
+    ServicePrincipal
+} from "@aws-cdk/aws-iam";
 import * as cdk from "@aws-cdk/core";
 
 export class TrainingStack extends cdk.Stack {
+    public vpc: Vpc;
+    public bastionSg: SecurityGroup;
+
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
         // Create VPC
-        const vpc = new Vpc(this, "vpc", {
+        this.vpc = new Vpc(this, "vpc", {
             cidr: "13.0.0.0/16",
             maxAzs: 2,
             natGateways: process.env.DEBUG ? 0 : 1,
@@ -40,16 +49,16 @@ export class TrainingStack extends cdk.Stack {
         });
 
         // Create bastion sg
-        const bastionSg = new SecurityGroup(this, "bastion-sg", {
-            vpc,
+        this.bastionSg = new SecurityGroup(this, "bastion-sg", {
+            vpc: this.vpc,
             allowAllOutbound: true,
             securityGroupName: "bastion-sg",
         });
-        bastionSg.addIngressRule(Peer.anyIpv4(), Port.tcp(22));
+        this.bastionSg.addIngressRule(Peer.anyIpv4(), Port.tcp(22));
 
         // Create bastion instance
         new Instance(this, "bastion", {
-            vpc,
+            vpc: this.vpc,
             vpcSubnets: {
                 subnetType: SubnetType.PUBLIC,
             },
@@ -57,7 +66,7 @@ export class TrainingStack extends cdk.Stack {
             machineImage: MachineImage.latestAmazonLinux({
                 generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
             }),
-            securityGroup: bastionSg,
+            securityGroup: this.bastionSg,
             keyName: "ec2-key-pair",
             instanceName: "bastion",
         });
@@ -97,19 +106,30 @@ export class TrainingStack extends cdk.Stack {
             environmentVariables: {
                 DEBUG: { value: process.env.DEBUG },
 
-                VPC_ID: { value: vpc.vpcId },
-                BASTION_SG_ID: { value: bastionSg.securityGroupId },
-
-                AWS_ACCESS_KEY_ID: { value: process.env.AWS_ACCESS_KEY_ID },
-                AWS_SECRET_ACCESS_KEY: {
-                    value: process.env.AWS_SECRET_ACCESS_KEY,
-                },
                 AWS_DEFAULT_REGION: { value: process.env.AWS_DEFAULT_REGION },
 
                 CDK_DEFAULT_ACCOUNT: { value: process.env.CDK_DEFAULT_ACCOUNT },
                 CDK_DEFAULT_REGION: { value: process.env.CDK_DEFAULT_REGION },
             },
             projectName: "websystem-build",
+            role: new Role(this, "codebuild-role", {
+                assumedBy: new ServicePrincipal("codebuild.amazonaws.com"),
+                inlinePolicies: {
+                    "codebuild-policy": new PolicyDocument({
+                        statements: [
+                            new PolicyStatement({
+                                actions: [
+                                    "ec2:*",
+                                    "cloudformation:*",
+                                    "autoscaling:*",
+                                    "elasticloadbalancing:*",
+                                ],
+                                resources: ["*"],
+                            }),
+                        ],
+                    }),
+                },
+            }),
         });
     }
 }

@@ -20,25 +20,22 @@ import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import moment = require("moment");
 
+interface WebSystemStackProps extends cdk.StackProps {
+    vpc: Vpc;
+    bastionSg: SecurityGroup;
+}
+
 export class WebSystemStack extends cdk.Stack {
-    constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    constructor(scope: cdk.Construct, id: string, props: WebSystemStackProps) {
         super(scope, id, props);
 
-        const vpcId = <string>process.env.VPC_ID;
-        const bastionSgId = <string>process.env.BASTION_SG_ID;
         const webAmiName = <string>process.env.AMI_NAME;
 
         // Import VPC
-        const vpc = Vpc.fromLookup(this, "vpc", {
-            vpcId,
-        });
+        const vpc = props.vpc;
 
         // Import bastion sg
-        const bastionSg = SecurityGroup.fromLookupById(
-            this,
-            "bastion-sg",
-            bastionSgId
-        );
+        const bastionSg = props.bastionSg;
 
         // Create Alb sg
         const albSg = new SecurityGroup(this, "alb-sg", {

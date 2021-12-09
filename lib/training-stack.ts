@@ -121,6 +121,7 @@ export class TrainingStack extends cdk.Stack {
                                 actions: [
                                     "ssm:GetParameters",
                                     "sts:AssumeRole",
+                                    "iam:CreateRole",
                                     "ec2:*",
                                     "cloudformation:*",
                                     "autoscaling:*",

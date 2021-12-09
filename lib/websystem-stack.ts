@@ -8,13 +8,13 @@ import {
     Port,
     SecurityGroup,
     SubnetType,
-    Vpc,
+    Vpc
 } from "@aws-cdk/aws-ec2";
 import {
     ApplicationLoadBalancer,
     ApplicationProtocol,
     ListenerAction,
-    ListenerCertificate,
+    ListenerCertificate
 } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
@@ -87,6 +87,7 @@ export class WebSystemStack extends cdk.Stack {
         httpListener.addAction("redirect-to-https", {
             action: ListenerAction.redirect({
                 protocol: ApplicationProtocol.HTTPS,
+                port: "443",
             }),
         });
 

@@ -120,6 +120,7 @@ export class TrainingStack extends cdk.Stack {
                             new PolicyStatement({
                                 actions: [
                                     "ssm:GetParameters",
+                                    "sts:AssumeRole",
                                     "ec2:*",
                                     "cloudformation:*",
                                     "autoscaling:*",

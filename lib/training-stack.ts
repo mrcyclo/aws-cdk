@@ -123,6 +123,7 @@ export class TrainingStack extends cdk.Stack {
                                     "cloudformation:*",
                                     "autoscaling:*",
                                     "elasticloadbalancing:*",
+                                    "ssm:GetParameters",
                                 ],
                                 resources: ["*"],
                             }),

@@ -119,11 +119,11 @@ export class TrainingStack extends cdk.Stack {
                         statements: [
                             new PolicyStatement({
                                 actions: [
+                                    "ssm:GetParameters",
                                     "ec2:*",
                                     "cloudformation:*",
                                     "autoscaling:*",
                                     "elasticloadbalancing:*",
-                                    "ssm:GetParameters",
                                 ],
                                 resources: ["*"],
                             }),

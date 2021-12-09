@@ -11,6 +11,7 @@ import {
     Vpc
 } from "@aws-cdk/aws-ec2";
 import * as cdk from "@aws-cdk/core";
+import { readFileSync } from "fs";
 import * as path from "path";
 
 export class AmiBuilderStack extends cdk.Stack {
@@ -33,11 +34,6 @@ export class AmiBuilderStack extends cdk.Stack {
         );
 
         // Create web instance
-        const userData = UserData.forLinux();
-        userData.addExecuteFileCommand({
-            filePath: path.join(__dirname, "ami-user-data.sh"),
-        });
-
         const webInstance = new Instance(this, "web-instance", {
             vpc,
             vpcSubnets: {
@@ -51,8 +47,10 @@ export class AmiBuilderStack extends cdk.Stack {
             }),
             securityGroup: bastionSg,
             keyName: "ec2-key-pair",
-            userData,
         });
+
+        const userDataScript = readFileSync(path.join(__dirname, "ami-user-data.sh"), 'utf8');
+        webInstance.addUserData(userDataScript);
 
         // Create an Output
         new cdk.CfnOutput(this, "web-instance-id", {

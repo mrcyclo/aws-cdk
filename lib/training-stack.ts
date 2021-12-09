@@ -92,7 +92,6 @@ export class TrainingStack extends cdk.Stack {
                 },
             }),
             environment: {
-                privileged: true,
                 buildImage: LinuxBuildImage.STANDARD_5_0,
             },
             environmentVariables: {

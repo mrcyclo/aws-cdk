@@ -88,6 +88,7 @@ export class TrainingStack extends cdk.Stack {
                             "export VERSION=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)",
                             "git clone https://github.com/mrcyclo/aws-cdk.git .",
                             "npm install",
+                            "cdk destroy ami-builder-stack --force",
                             "cdk deploy ami-builder-stack --require-approval never",
                             `export INSTANCE_ID=$(aws cloudformation describe-stacks --stack-name ami-builder-stack --output text --query="Stacks[0].Outputs[?OutputKey=='webinstanceid'].OutputValue")`,
                             "export AMI_NAME=web-ami-$VERSION",

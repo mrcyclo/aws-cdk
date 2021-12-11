@@ -120,6 +120,8 @@ export class TrainingStack extends cdk.Stack {
                                     "sts:AssumeRole",
                                     "iam:CreateRole",
                                     "iam:PutRolePolicy",
+                                    "iam:CreateInstanceProfile",
+                                    "iam:DeleteRole",
                                     "ec2:*",
                                     "cloudformation:*",
                                     "autoscaling:*",

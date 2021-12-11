@@ -112,7 +112,7 @@ export class TrainingStack extends cdk.Stack {
             role: new Role(this, "codebuild-role", {
                 assumedBy: new ServicePrincipal("codebuild.amazonaws.com"),
                 inlinePolicies: {
-                    "codebuild-policy": new PolicyDocument({
+                    "codebuild-policies": new PolicyDocument({
                         statements: [
                             new PolicyStatement({
                                 actions: [

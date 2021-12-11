@@ -122,6 +122,8 @@ export class TrainingStack extends cdk.Stack {
                                     "iam:PutRolePolicy",
                                     "iam:CreateInstanceProfile",
                                     "iam:DeleteRole",
+                                    "iam:AddRoleToInstanceProfile",
+                                    "iam:RemoveRoleFromInstanceProfile",
                                     "ec2:*",
                                     "cloudformation:*",
                                     "autoscaling:*",

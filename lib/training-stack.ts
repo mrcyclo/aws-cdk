@@ -76,15 +76,11 @@ export class TrainingStack extends cdk.Stack {
             buildSpec: BuildSpec.fromObject({
                 version: "0.2",
                 phases: {
-                    install: {
+                    build: {
                         commands: [
                             "apt update -y",
                             "apt install -y git nodejs",
                             "npm i -g aws-cdk",
-                        ],
-                    },
-                    build: {
-                        commands: [
                             "export VERSION=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)",
                             "git clone https://github.com/mrcyclo/aws-cdk.git .",
                             "npm install",

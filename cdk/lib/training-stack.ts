@@ -99,7 +99,7 @@ export class TrainingStack extends cdk.Stack {
                                 actions: [
                                     "ssm:GetParameters",
                                     "sts:AssumeRole",
-                                    "cloudformation.*",
+                                    "cloudformation:*",
                                     "iam:*",
                                     "elasticloadbalancing:*",
                                     "ecr:*",

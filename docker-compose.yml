@@ -5,9 +5,17 @@ services:
         env_file:
             - .env
         volumes:
-            - .:/target
+            - ./cdk:/target
 
     web:
         build: ./web
         ports:
           - 80:80
+
+    codebuild:
+        build: ./codebuild
+        env_file:
+            - .env
+        volumes:
+            - .:/target
+            - //var/run/docker.sock:/var/run/docker.sock

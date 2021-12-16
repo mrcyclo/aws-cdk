@@ -42,11 +42,6 @@ export class WebSystemStack extends cdk.Stack {
             memoryMiB: "512",
             cpu: "256",
             compatibility: Compatibility.FARGATE,
-            // taskRole: Role.fromRoleArn(
-            //     this,
-            //     "roleEcsTaskExecutionRole",
-            //     "arn:aws:iam::903969887945:role/ecsTaskExecutionRole"
-            // ),
         });
 
         // Add container to Task Definition

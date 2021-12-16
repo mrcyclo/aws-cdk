@@ -101,6 +101,7 @@ export class TrainingStack extends cdk.Stack {
                                     "sts:AssumeRole",
                                     "cloudformation:*",
                                     "iam:*",
+                                    "ec2:*",
                                     "elasticloadbalancing:*",
                                     "ecr:*",
                                     "ecs:*",

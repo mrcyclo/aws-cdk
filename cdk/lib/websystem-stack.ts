@@ -5,14 +5,15 @@ import {
     ContainerImage,
     FargateService,
     ListenerConfig,
-    TaskDefinition,
+    TaskDefinition
 } from "@aws-cdk/aws-ecs";
 import {
     ApplicationLoadBalancer,
     ApplicationProtocol,
     ListenerAction,
-    ListenerCertificate,
+    ListenerCertificate
 } from "@aws-cdk/aws-elasticloadbalancingv2";
+import { Role } from "@aws-cdk/aws-iam";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import moment = require("moment");
@@ -40,12 +41,17 @@ export class WebSystemStack extends cdk.Stack {
             memoryMiB: "512",
             cpu: "256",
             compatibility: Compatibility.FARGATE,
+            taskRole: Role.fromRoleArn(
+                this,
+                "roleEcsTaskExecutionRole",
+                "arn:aws:iam::903969887945:role/ecsTaskExecutionRole"
+            ),
         });
 
         // Add container to Task Definition
         const imageTag = <string>process.env.IMAGE_TAG;
         const containerDefinition = taskDefinition.addContainer("container", {
-            containerName: 'laravel',
+            containerName: "laravel",
             image: ContainerImage.fromRegistry(imageTag),
             healthCheck: {
                 command: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"],

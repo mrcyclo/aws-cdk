@@ -45,6 +45,7 @@ export class WebSystemStack extends cdk.Stack {
         // Add container to Task Definition
         const imageTag = <string>process.env.IMAGE_TAG;
         const containerDefinition = taskDefinition.addContainer("container", {
+            containerName: 'laravel',
             image: ContainerImage.fromRegistry(imageTag),
             healthCheck: {
                 command: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"],

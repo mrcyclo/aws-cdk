@@ -118,7 +118,7 @@ export class WebSystemStack extends cdk.Stack {
         });
 
         service.registerLoadBalancerTargets({
-            containerName: "laravel",
+            containerName: containerDefinition.containerName,
             containerPort: 80,
             newTargetGroupId: "ECS",
             listener: ListenerConfig.applicationListener(httpsListener, {

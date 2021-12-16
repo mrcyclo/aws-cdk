@@ -1,4 +1,5 @@
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
+import { Repository } from "@aws-cdk/aws-ecr";
 import {
     Cluster,
     Compatibility,
@@ -41,18 +42,21 @@ export class WebSystemStack extends cdk.Stack {
             memoryMiB: "512",
             cpu: "256",
             compatibility: Compatibility.FARGATE,
-            taskRole: Role.fromRoleArn(
-                this,
-                "roleEcsTaskExecutionRole",
-                "arn:aws:iam::903969887945:role/ecsTaskExecutionRole"
-            ),
+            // taskRole: Role.fromRoleArn(
+            //     this,
+            //     "roleEcsTaskExecutionRole",
+            //     "arn:aws:iam::903969887945:role/ecsTaskExecutionRole"
+            // ),
         });
 
         // Add container to Task Definition
-        const imageTag = <string>process.env.IMAGE_TAG;
+        const imageTag = <string>process.env.VERSION;
         const containerDefinition = taskDefinition.addContainer("container", {
             containerName: "laravel",
-            image: ContainerImage.fromRegistry(imageTag),
+            image: ContainerImage.fromEcrRepository(
+                Repository.fromRepositoryName(this, "laravel", "laravel"),
+                imageTag
+            ),
             healthCheck: {
                 command: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"],
             },

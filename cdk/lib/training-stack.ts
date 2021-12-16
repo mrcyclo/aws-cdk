@@ -71,7 +71,6 @@ export class TrainingStack extends cdk.Stack {
                             "npm i -g aws-cdk",
                             "npm install",
                             "export WEBSYSTEM_STACK_NAME=websystem-stack-$VERSION",
-                            "export IMAGE_TAG=903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION",
                             "cdk deploy websystem-stack --require-approval never",
                         ],
                     },

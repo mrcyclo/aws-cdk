@@ -1,17 +1,13 @@
 version: '3'
 services:
     cdk:
-        build: .
+        build: ./cdk
         env_file:
             - .env
         volumes:
             - .:/target
 
-    codebuild:
-        build:
-            context: .
-            dockerfile: Dockerfile-codebuild
-        env_file:
-            - .env
-        volumes:
-            - .:/target
+    web:
+        build: ./web
+        ports:
+          - 80:80

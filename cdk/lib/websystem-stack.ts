@@ -19,7 +19,6 @@ import moment = require("moment");
 
 interface WebSystemStackProps extends cdk.StackProps {
     vpc: Vpc;
-    bastionSg: SecurityGroup;
 }
 
 export class WebSystemStack extends cdk.Stack {
@@ -30,9 +29,6 @@ export class WebSystemStack extends cdk.Stack {
 
         // Import VPC
         const vpc = props.vpc;
-
-        // Import bastion sg
-        const bastionSg = props.bastionSg;
 
         // Create cluster
         const cluster = new Cluster(this, "cluster", {

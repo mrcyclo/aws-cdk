@@ -8,28 +8,22 @@ import { WebSystemStack } from "../lib/websystem-stack";
 
 const app = new cdk.App();
 
+const env = {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION,
+};
+
 const trainingStack = new TrainingStack(app, "training-stack", {
-    env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
-    },
+    env,
 });
 
 new WebSystemStack(app, "websystem-stack", {
-    env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
-    },
+    env,
     stackName: process.env.WEBSYSTEM_STACK_NAME,
     vpc: trainingStack.vpc,
-    bastionSg: trainingStack.bastionSg,
 });
 
 new AmiBuilderStack(app, "ami-builder-stack", {
-    env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT,
-        region: process.env.CDK_DEFAULT_REGION,
-    },
+    env,
     vpc: trainingStack.vpc,
-    bastionSg: trainingStack.bastionSg,
 });

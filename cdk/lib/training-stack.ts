@@ -22,7 +22,6 @@ import * as cdk from "@aws-cdk/core";
 
 export class TrainingStack extends cdk.Stack {
     public vpc: Vpc;
-    public bastionSg: SecurityGroup;
 
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
@@ -46,29 +45,6 @@ export class TrainingStack extends cdk.Stack {
                     cidrMask: 24,
                 },
             ],
-        });
-
-        // Create bastion sg
-        this.bastionSg = new SecurityGroup(this, "bastion-sg", {
-            vpc: this.vpc,
-            allowAllOutbound: true,
-            securityGroupName: "bastion-sg",
-        });
-        this.bastionSg.addIngressRule(Peer.anyIpv4(), Port.tcp(22));
-
-        // Create bastion instance
-        new Instance(this, "bastion", {
-            vpc: this.vpc,
-            vpcSubnets: {
-                subnetType: SubnetType.PUBLIC,
-            },
-            instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-            machineImage: MachineImage.latestAmazonLinux({
-                generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
-            }),
-            securityGroup: this.bastionSg,
-            keyName: "ec2-key-pair",
-            instanceName: "bastion",
         });
 
         // Create code build project
@@ -123,9 +99,6 @@ export class TrainingStack extends cdk.Stack {
                                     "ssm:GetParameters",
                                     "sts:AssumeRole",
                                     "iam:*",
-                                    "ec2:*",
-                                    "cloudformation:*",
-                                    "autoscaling:*",
                                     "elasticloadbalancing:*",
                                 ],
                                 resources: ["*"],

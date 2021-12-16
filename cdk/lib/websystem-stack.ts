@@ -14,7 +14,6 @@ import {
     ListenerAction,
     ListenerCertificate
 } from "@aws-cdk/aws-elasticloadbalancingv2";
-import { Role } from "@aws-cdk/aws-iam";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import moment = require("moment");
@@ -52,9 +51,6 @@ export class WebSystemStack extends cdk.Stack {
                 Repository.fromRepositoryName(this, "laravel", "laravel"),
                 imageTag
             ),
-            healthCheck: {
-                command: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"],
-            },
             portMappings: [
                 {
                     containerPort: 80,
@@ -68,6 +64,13 @@ export class WebSystemStack extends cdk.Stack {
             allowAllOutbound: true,
         });
         albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
+
+        // Create web instance sg
+        const webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
+            vpc,
+            allowAllOutbound: true,
+        });
+        webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
 
         // Create Application Load Balancer
         const alb = new ApplicationLoadBalancer(this, "alb", {
@@ -111,6 +114,7 @@ export class WebSystemStack extends cdk.Stack {
                     ? SubnetType.PUBLIC
                     : SubnetType.PRIVATE_WITH_NAT,
             },
+            securityGroups: [webInstanceSg],
         });
 
         service.registerLoadBalancerTargets({

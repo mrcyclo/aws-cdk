@@ -6,16 +6,7 @@ RUN yum install -y unzip curl httpd php php-common php-pgsql php-curl php-gd php
     yum clean all && \
     rm -rf /var/cache/yum
 
-RUN echo " \
-<VirtualHost *:80> \
-	DocumentRoot /var/www/html/public \
-	<Directory /var/www/html/public> \
-		Order allow,deny \
-		Allow from all \
-		AllowOverride all \
-	</Directory> \
-</VirtualHost> \
-" | tee /etc/httpd/conf.d/web.conf
+COPY ./envfiles/web.conf /etc/httpd/conf.d/web.conf
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --filename=composer
 

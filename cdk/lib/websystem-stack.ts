@@ -1,20 +1,17 @@
-import { AutoScalingGroup } from "@aws-cdk/aws-autoscaling";
+import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import {
-    InstanceClass,
-    InstanceSize,
-    InstanceType,
-    MachineImage,
-    Peer,
-    Port,
-    SecurityGroup,
-    SubnetType,
-    Vpc
-} from "@aws-cdk/aws-ec2";
+    Cluster,
+    Compatibility,
+    ContainerImage,
+    FargateService,
+    ListenerConfig,
+    TaskDefinition,
+} from "@aws-cdk/aws-ecs";
 import {
     ApplicationLoadBalancer,
     ApplicationProtocol,
     ListenerAction,
-    ListenerCertificate
+    ListenerCertificate,
 } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
@@ -37,33 +34,38 @@ export class WebSystemStack extends cdk.Stack {
         // Import bastion sg
         const bastionSg = props.bastionSg;
 
+        // Create cluster
+        const cluster = new Cluster(this, "cluster", {
+            vpc,
+        });
+
+        // Create Task Definition
+        const taskDefinition = new TaskDefinition(this, "task-definition", {
+            memoryMiB: "512",
+            cpu: "256",
+            compatibility: Compatibility.FARGATE,
+        });
+
+        // Add container to Task Definition
+        const imageTag = <string>process.env.IMAGE_TAG;
+        const containerDefinition = taskDefinition.addContainer("container", {
+            image: ContainerImage.fromRegistry(imageTag),
+            healthCheck: {
+                command: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"],
+            },
+            portMappings: [
+                {
+                    containerPort: 80,
+                },
+            ],
+        });
+
         // Create Alb sg
         const albSg = new SecurityGroup(this, "alb-sg", {
             vpc,
             allowAllOutbound: true,
         });
         albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
-
-        // Create web instance sg
-        const webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
-            vpc,
-            allowAllOutbound: true,
-        });
-        webInstanceSg.connections.allowFrom(bastionSg, Port.tcp(22));
-        webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
-
-        // Create Auto Scaling Group
-        const asg = new AutoScalingGroup(this, "asg", {
-            vpc: vpc,
-            instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-            machineImage: MachineImage.lookup({
-                name: webAmiName,
-            }),
-            securityGroup: webInstanceSg,
-            minCapacity: 1,
-            maxCapacity: 2,
-            keyName: "ec2-key-pair",
-        });
 
         // Create Application Load Balancer
         const alb = new ApplicationLoadBalancer(this, "alb", {
@@ -98,32 +100,25 @@ export class WebSystemStack extends cdk.Stack {
             ],
         });
 
-        httpsListener.addTargets("https-target", {
-            port: 80,
-            targets: [asg],
-            stickinessCookieDuration: Duration.days(1),
-            healthCheck: {
-                healthyHttpCodes: "200",
-                path: "/",
+        // Create Service
+        const service = new FargateService(this, "service", {
+            cluster,
+            taskDefinition,
+            vpcSubnets: {
+                subnetType: process.env.DEBUG
+                    ? SubnetType.PUBLIC
+                    : SubnetType.PRIVATE_WITH_NAT,
             },
         });
 
-        // Set up dynamic scaling policy
-        asg.scaleOnRequestCount("request-count-scale", {
-            targetRequestsPerMinute: 1,
-            estimatedInstanceWarmup: Duration.seconds(10),
-            cooldown: Duration.seconds(10),
+        service.registerLoadBalancerTargets({
+            containerName: "laravel",
+            containerPort: 80,
+            newTargetGroupId: "ECS",
+            listener: ListenerConfig.applicationListener(httpsListener, {
+                protocol: ApplicationProtocol.HTTPS,
+                stickinessCookieDuration: Duration.days(1),
+            }),
         });
-
-        // Change setting of Route53
-        // const hostedZone = PublicHostedZone.fromPublicHostedZoneId(
-        //     this,
-        //     "hosted-zone",
-        //     "Z1006312LKA67UQB22AD"
-        // );
-        // new ARecord(this, "a-record", {
-        //     zone: hostedZone,
-        //     target: RecordTarget.fromAlias(new LoadBalancerTarget(alb)),
-        // });
     }
 }

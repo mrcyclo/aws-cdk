@@ -79,6 +79,7 @@ export class TrainingStack extends cdk.Stack {
             }),
             environment: {
                 buildImage: LinuxBuildImage.STANDARD_5_0,
+                privileged: true,
             },
             environmentVariables: {
                 DEBUG: { value: process.env.DEBUG },

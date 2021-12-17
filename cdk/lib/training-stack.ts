@@ -93,6 +93,7 @@ export class TrainingStack extends cdk.Stack {
                                     "iam:*",
                                     "ec2:*",
                                     "elasticloadbalancing:*",
+                                    "application-autoscaling:*",
                                     "ecr:*",
                                     "ecs:*",
                                     "logs:*",

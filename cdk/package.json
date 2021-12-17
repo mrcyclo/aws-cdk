@@ -33,6 +33,8 @@
     "@aws-cdk/aws-route53-targets": "1.134.0",
     "@aws-cdk/aws-iam": "1.134.0",
     "@aws-cdk/aws-ecs": "1.134.0",
-    "@aws-cdk/aws-ecr" : "1.134.0"
+    "@aws-cdk/aws-ecr": "1.134.0",
+    "@aws-cdk/aws-ecs-patterns": "1.134.0",
+    "@aws-cdk/aws-certificatemanager": "1.134.0"
   }
 }

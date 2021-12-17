@@ -1,19 +1,13 @@
+import { Certificate } from "@aws-cdk/aws-certificatemanager";
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import { Repository } from "@aws-cdk/aws-ecr";
 import {
     Cluster,
-    Compatibility,
-    ContainerImage,
-    FargateService,
-    ListenerConfig,
-    TaskDefinition
+    ContainerImage
 } from "@aws-cdk/aws-ecs";
-import {
-    ApplicationLoadBalancer,
-    ApplicationProtocol,
-    ListenerAction,
-    ListenerCertificate
-} from "@aws-cdk/aws-elasticloadbalancingv2";
+import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
+import { ApplicationProtocol } from "@aws-cdk/aws-elasticloadbalancingv2";
+import { HostedZone } from "@aws-cdk/aws-route53";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
 import moment = require("moment");
@@ -36,28 +30,6 @@ export class WebSystemStack extends cdk.Stack {
             vpc,
         });
 
-        // Create Task Definition
-        const taskDefinition = new TaskDefinition(this, "task-definition", {
-            memoryMiB: "512",
-            cpu: "256",
-            compatibility: Compatibility.FARGATE,
-        });
-
-        // Add container to Task Definition
-        const imageTag = <string>process.env.VERSION;
-        const containerDefinition = taskDefinition.addContainer("container", {
-            containerName: "laravel",
-            image: ContainerImage.fromEcrRepository(
-                Repository.fromRepositoryName(this, "laravel", "laravel"),
-                imageTag
-            ),
-            portMappings: [
-                {
-                    containerPort: 80,
-                },
-            ],
-        });
-
         // Create Alb sg
         const albSg = new SecurityGroup(this, "alb-sg", {
             vpc,
@@ -72,60 +44,61 @@ export class WebSystemStack extends cdk.Stack {
         });
         webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
 
-        // Create Application Load Balancer
-        const alb = new ApplicationLoadBalancer(this, "alb", {
-            vpc: vpc,
-            internetFacing: true,
-            securityGroup: albSg,
-            vpcSubnets: {
-                subnetType: SubnetType.PUBLIC,
-                onePerAz: true,
-            },
-        });
-
-        // Redirect http to https
-        const httpListener = alb.addListener("http", {
-            port: 80,
-        });
-
-        httpListener.addAction("redirect-to-https", {
-            action: ListenerAction.redirect({
-                protocol: ApplicationProtocol.HTTPS,
-                port: "443",
-            }),
-        });
-
-        // Default listener
-        const httpsListener = alb.addListener("https", {
-            port: 443,
-            certificates: [
-                ListenerCertificate.fromArn(
+        // Create ALB Service
+        const imageTag = <string>process.env.VERSION;
+        const albService = new ApplicationLoadBalancedFargateService(
+            this,
+            "alb",
+            {
+                vpc,
+                cluster,
+                desiredCount: 1,
+                certificate: Certificate.fromCertificateArn(
+                    this,
+                    "cert",
                     "arn:aws:acm:ap-southeast-1:903969887945:certificate/4a614376-9c78-4b5c-90c4-6eb5d9b40987"
                 ),
-            ],
-        });
-
-        // Create Service
-        const service = new FargateService(this, "service", {
-            cluster,
-            taskDefinition,
-            vpcSubnets: {
-                subnetType: process.env.DEBUG
-                    ? SubnetType.PUBLIC
-                    : SubnetType.PRIVATE_WITH_NAT,
-            },
-            securityGroups: [webInstanceSg],
-            assignPublicIp: true,
-        });
-
-        service.registerLoadBalancerTargets({
-            containerName: containerDefinition.containerName,
-            containerPort: 80,
-            newTargetGroupId: "ECS",
-            listener: ListenerConfig.applicationListener(httpsListener, {
+                listenerPort: 443,
                 protocol: ApplicationProtocol.HTTPS,
-                stickinessCookieDuration: Duration.days(1),
-            }),
+                targetProtocol: ApplicationProtocol.HTTP,
+                redirectHTTP: true,
+                taskSubnets: {
+                    subnetType: process.env.DEBUG
+                        ? SubnetType.PUBLIC
+                        : SubnetType.PRIVATE_WITH_NAT,
+                },
+                taskImageOptions: {
+                    image: ContainerImage.fromEcrRepository(
+                        Repository.fromRepositoryName(
+                            this,
+                            "laravel",
+                            "laravel"
+                        ),
+                        imageTag
+                    ),
+                    containerPort: 80,
+                },
+                assignPublicIp: true,
+                // securityGroups: [webInstanceSg],
+                domainZone: HostedZone.fromHostedZoneId(
+                    this,
+                    "hosted-zone",
+                    "Z1006312LKA67UQB22AD"
+                ),
+            }
+        );
+
+        // Setup autoscaling
+        const scalableTarget = albService.service.autoScaleTaskCount({
+            minCapacity: 1,
+            maxCapacity: 5,
+        });
+
+        scalableTarget.scaleOnRequestCount("request-count-scale", {
+            requestsPerTarget: 1,
+            targetGroup: albService.targetGroup,
+            scaleInCooldown: Duration.seconds(60),
+            scaleOutCooldown: Duration.seconds(60),
         });
     }
 }

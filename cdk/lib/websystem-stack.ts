@@ -97,7 +97,6 @@ export class WebSystemStack extends cdk.Stack {
                     "hosted-zone",
                     "Z1006312LKA67UQB22AD"
                 ),
-                domainName: "cookoo.online",
             }
         );
 

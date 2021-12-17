@@ -3,7 +3,10 @@ import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import { Repository } from "@aws-cdk/aws-ecr";
 import { Cluster, ContainerImage } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
-import { ApplicationProtocol } from "@aws-cdk/aws-elasticloadbalancingv2";
+import {
+    ApplicationLoadBalancer,
+    ApplicationProtocol
+} from "@aws-cdk/aws-elasticloadbalancingv2";
 import { HostedZone } from "@aws-cdk/aws-route53";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
@@ -41,13 +44,25 @@ export class WebSystemStack extends cdk.Stack {
         });
         webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
 
+        // Create Application Load Balancer
+        const alb = new ApplicationLoadBalancer(this, "alb", {
+            vpc: vpc,
+            internetFacing: true,
+            securityGroup: albSg,
+            vpcSubnets: {
+                subnetType: SubnetType.PUBLIC,
+                onePerAz: true,
+            },
+        });
+
         // Create ALB Service
         const imageTag = <string>process.env.VERSION;
         const albService = new ApplicationLoadBalancedFargateService(
             this,
-            "alb",
+            "alb-service",
             {
                 cluster,
+                loadBalancer: alb,
                 desiredCount: 1,
                 certificate: Certificate.fromCertificateArn(
                     this,
@@ -58,6 +73,8 @@ export class WebSystemStack extends cdk.Stack {
                 protocol: ApplicationProtocol.HTTPS,
                 targetProtocol: ApplicationProtocol.HTTP,
                 redirectHTTP: true,
+                publicLoadBalancer: true,
+                assignPublicIp: true,
                 taskImageOptions: {
                     image: ContainerImage.fromEcrRepository(
                         Repository.fromRepositoryName(
@@ -69,13 +86,18 @@ export class WebSystemStack extends cdk.Stack {
                     ),
                     containerPort: 80,
                 },
-                assignPublicIp: true,
-                // securityGroups: [webInstanceSg],
+                taskSubnets: {
+                    subnetType: process.env.DEBUG
+                        ? SubnetType.PUBLIC
+                        : SubnetType.PRIVATE_WITH_NAT,
+                },
+                securityGroups: [webInstanceSg],
                 domainZone: HostedZone.fromHostedZoneId(
                     this,
                     "hosted-zone",
                     "Z1006312LKA67UQB22AD"
                 ),
+                domainName: "cookoo.online",
             }
         );
 

@@ -61,7 +61,6 @@ export class TrainingStack extends cdk.Stack {
                             "cd cdk",
                             "npm i -g aws-cdk",
                             "npm install",
-                            "export WEBSYSTEM_STACK_NAME=websystem-stack-$VERSION",
                             "cdk deploy websystem-stack --require-approval never",
                         ],
                     },

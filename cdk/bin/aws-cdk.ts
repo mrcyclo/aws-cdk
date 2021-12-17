@@ -18,6 +18,5 @@ const trainingStack = new TrainingStack(app, "training-stack", {
 
 new WebSystemStack(app, "websystem-stack", {
     env,
-    stackName: process.env.WEBSYSTEM_STACK_NAME,
     vpc: trainingStack.vpc,
 });

@@ -115,6 +115,7 @@ export class WebSystemStack extends cdk.Stack {
                     : SubnetType.PRIVATE_WITH_NAT,
             },
             securityGroups: [webInstanceSg],
+            assignPublicIp: true,
         });
 
         service.registerLoadBalancerTargets({

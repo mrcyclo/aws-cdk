@@ -1,10 +1,7 @@
 import { Certificate } from "@aws-cdk/aws-certificatemanager";
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import { Repository } from "@aws-cdk/aws-ecr";
-import {
-    Cluster,
-    ContainerImage
-} from "@aws-cdk/aws-ecs";
+import { Cluster, ContainerImage } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
 import { ApplicationProtocol } from "@aws-cdk/aws-elasticloadbalancingv2";
 import { HostedZone } from "@aws-cdk/aws-route53";
@@ -50,7 +47,6 @@ export class WebSystemStack extends cdk.Stack {
             this,
             "alb",
             {
-                vpc,
                 cluster,
                 desiredCount: 1,
                 certificate: Certificate.fromCertificateArn(

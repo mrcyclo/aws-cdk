@@ -62,6 +62,7 @@ export class WebSystemStack extends cdk.Stack {
                     subnetType: process.env.DEBUG
                         ? SubnetType.PUBLIC
                         : SubnetType.PRIVATE_WITH_NAT,
+                    onePerAz: true,
                 },
                 taskImageOptions: {
                     image: ContainerImage.fromEcrRepository(

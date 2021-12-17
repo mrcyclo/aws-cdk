@@ -1,14 +1,5 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
 import {
-    AmazonLinuxGeneration,
-    Instance,
-    InstanceClass,
-    InstanceSize,
-    InstanceType,
-    MachineImage,
-    Peer,
-    Port,
-    SecurityGroup,
     SubnetType,
     Vpc
 } from "@aws-cdk/aws-ec2";
@@ -104,6 +95,7 @@ export class TrainingStack extends cdk.Stack {
                                     "elasticloadbalancing:*",
                                     "ecr:*",
                                     "ecs:*",
+                                    "logs:*",
                                 ],
                                 resources: ["*"],
                             }),

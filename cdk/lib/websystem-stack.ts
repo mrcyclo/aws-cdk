@@ -92,11 +92,6 @@ export class WebSystemStack extends cdk.Stack {
                         : SubnetType.PRIVATE_WITH_NAT,
                 },
                 securityGroups: [webInstanceSg],
-                domainZone: HostedZone.fromHostedZoneId(
-                    this,
-                    "hosted-zone",
-                    "Z1006312LKA67UQB22AD"
-                ),
             }
         );
 

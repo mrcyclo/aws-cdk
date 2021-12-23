@@ -35,7 +35,7 @@ export class WebSystemStack extends cdk.Stack {
             vpc,
             allowAllOutbound: true,
         });
-        webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
+        webInstanceSg.connections.allowFrom(props.albSg, Port.tcp(80));
 
         // Create ALB Service
         const albService = new ApplicationLoadBalancedFargateService(
@@ -43,7 +43,7 @@ export class WebSystemStack extends cdk.Stack {
             "alb-service",
             {
                 cluster,
-                loadBalancer: alb,
+                loadBalancer: props.alb,
                 desiredCount: 1,
                 certificate: Certificate.fromCertificateArn(
                     this,

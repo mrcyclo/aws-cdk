@@ -5,12 +5,10 @@ import { Cluster, ContainerImage } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
 import {
     ApplicationLoadBalancer,
-    ApplicationProtocol
+    ApplicationProtocol,
 } from "@aws-cdk/aws-elasticloadbalancingv2";
-import { HostedZone } from "@aws-cdk/aws-route53";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
-import moment = require("moment");
 
 interface WebSystemStackProps extends cdk.StackProps {
     vpc: Vpc;
@@ -20,7 +18,7 @@ export class WebSystemStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props: WebSystemStackProps) {
         super(scope, id, props);
 
-        const webAmiName = <string>process.env.AMI_NAME;
+        const imageTag = <string>process.env.VERSION;
 
         // Import VPC
         const vpc = props.vpc;
@@ -56,7 +54,6 @@ export class WebSystemStack extends cdk.Stack {
         });
 
         // Create ALB Service
-        const imageTag = <string>process.env.VERSION;
         const albService = new ApplicationLoadBalancedFargateService(
             this,
             "alb-service",

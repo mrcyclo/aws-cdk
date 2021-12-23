@@ -1,13 +1,10 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
-import {
-    SubnetType,
-    Vpc
-} from "@aws-cdk/aws-ec2";
+import { SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import {
     PolicyDocument,
     PolicyStatement,
     Role,
-    ServicePrincipal
+    ServicePrincipal,
 } from "@aws-cdk/aws-iam";
 import * as cdk from "@aws-cdk/core";
 
@@ -46,17 +43,24 @@ export class TrainingStack extends cdk.Stack {
                     build: {
                         commands: [
                             "apt update -y",
-                            "export VERSION=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)",
                             "git clone https://github.com/mrcyclo/aws-cdk.git .",
 
-                            "cd web",
-                            "aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com",
-                            "docker build -t laravel .",
-                            "docker tag laravel:latest 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION",
-                            "docker push 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION",
-                            "docker rmi 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION",
-                            "docker rmi laravel:latest",
-                            "cd ..",
+                            `
+                            if [$IMAGE_TAG = '']
+                            then
+                                export VERSION=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
+                                cd web
+                                aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com
+                                docker build -t laravel .
+                                docker tag laravel:latest 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION
+                                docker push 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION
+                                docker rmi 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION
+                                docker rmi laravel:latest
+                                cd ..
+                            else
+                                export VERSION=$IMAGE_TAG
+                            fi
+                            `,
 
                             "cd cdk",
                             "npm i -g aws-cdk",
@@ -77,6 +81,8 @@ export class TrainingStack extends cdk.Stack {
 
                 CDK_DEFAULT_ACCOUNT: { value: process.env.CDK_DEFAULT_ACCOUNT },
                 CDK_DEFAULT_REGION: { value: process.env.CDK_DEFAULT_REGION },
+
+                IMAGE_TAG: { value: "" },
             },
             projectName: "websystem-build",
             role: new Role(this, "codebuild-role", {

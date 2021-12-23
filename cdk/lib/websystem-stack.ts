@@ -1,5 +1,5 @@
 import { Certificate } from "@aws-cdk/aws-certificatemanager";
-import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
+import { Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import { Repository } from "@aws-cdk/aws-ecr";
 import { Cluster, ContainerImage } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
@@ -12,6 +12,8 @@ import { Duration } from "@aws-cdk/core";
 
 interface WebSystemStackProps extends cdk.StackProps {
     vpc: Vpc;
+    alb: ApplicationLoadBalancer;
+    albSg: SecurityGroup;
 }
 
 export class WebSystemStack extends cdk.Stack {
@@ -28,30 +30,12 @@ export class WebSystemStack extends cdk.Stack {
             vpc,
         });
 
-        // Create Alb sg
-        const albSg = new SecurityGroup(this, "alb-sg", {
-            vpc,
-            allowAllOutbound: true,
-        });
-        albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
-
         // Create web instance sg
         const webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
             vpc,
             allowAllOutbound: true,
         });
         webInstanceSg.connections.allowFrom(albSg, Port.tcp(80));
-
-        // Create Application Load Balancer
-        const alb = new ApplicationLoadBalancer(this, "alb", {
-            vpc: vpc,
-            internetFacing: true,
-            securityGroup: albSg,
-            vpcSubnets: {
-                subnetType: SubnetType.PUBLIC,
-                onePerAz: true,
-            },
-        });
 
         // Create ALB Service
         const albService = new ApplicationLoadBalancedFargateService(

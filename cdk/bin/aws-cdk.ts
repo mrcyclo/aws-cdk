@@ -19,4 +19,6 @@ const trainingStack = new TrainingStack(app, "training-stack", {
 new WebSystemStack(app, "websystem-stack", {
     env,
     vpc: trainingStack.vpc,
+    alb: trainingStack.alb,
+    albSg: trainingStack.albSg,
 });

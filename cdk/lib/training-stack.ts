@@ -1,5 +1,6 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
-import { SubnetType, Vpc } from "@aws-cdk/aws-ec2";
+import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
+import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
 import {
     PolicyDocument,
     PolicyStatement,
@@ -9,7 +10,9 @@ import {
 import * as cdk from "@aws-cdk/core";
 
 export class TrainingStack extends cdk.Stack {
-    public vpc: Vpc;
+    public readonly vpc: Vpc;
+    public readonly alb: ApplicationLoadBalancer;
+    public readonly albSg: SecurityGroup;
 
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
@@ -33,6 +36,24 @@ export class TrainingStack extends cdk.Stack {
                     cidrMask: 24,
                 },
             ],
+        });
+
+        // Create Alb sg
+        this.albSg = new SecurityGroup(this, "alb-sg", {
+            vpc: this.vpc,
+            allowAllOutbound: true,
+        });
+        this.albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
+
+        // Create Application Load Balancer
+        const alb = new ApplicationLoadBalancer(this, "alb", {
+            vpc: this.vpc,
+            internetFacing: true,
+            securityGroup: this.albSg,
+            vpcSubnets: {
+                subnetType: SubnetType.PUBLIC,
+                onePerAz: true,
+            },
         });
 
         // Create code build project

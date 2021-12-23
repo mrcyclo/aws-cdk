@@ -10,6 +10,8 @@ COPY ./envfiles/web.conf /etc/httpd/conf.d/web.conf
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --filename=composer
 
+RUN echo $VERSION > /var/www/html/resources/views/welcome.blade.php
+
 WORKDIR /var/www/html
 
 RUN composer create-project laravel/laravel . && \

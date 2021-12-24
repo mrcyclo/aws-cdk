@@ -1,11 +1,11 @@
 import { Certificate } from "@aws-cdk/aws-certificatemanager";
-import { Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
+import { SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import { Repository } from "@aws-cdk/aws-ecr";
 import { Cluster, ContainerImage } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
 import {
     ApplicationLoadBalancer,
-    ApplicationProtocol,
+    ApplicationProtocol
 } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
@@ -14,35 +14,22 @@ interface WebSystemStackProps extends cdk.StackProps {
     vpc: Vpc;
     alb: ApplicationLoadBalancer;
     albSg: SecurityGroup;
+    cluster: Cluster;
+    webInstanceSg: SecurityGroup;
 }
 
 export class WebSystemStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props: WebSystemStackProps) {
         super(scope, id, props);
 
-        const imageTag = <string>process.env.VERSION;
-
-        // Import VPC
-        const vpc = props.vpc;
-
-        // Create cluster
-        const cluster = new Cluster(this, "cluster", {
-            vpc,
-        });
-
-        // Create web instance sg
-        const webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
-            vpc,
-            allowAllOutbound: true,
-        });
-        webInstanceSg.connections.allowFrom(props.albSg, Port.tcp(80));
+        const imageTag = <string>process.env.IMAGE_TAG;
 
         // Create ALB Service
         const albService = new ApplicationLoadBalancedFargateService(
             this,
             "alb-service",
             {
-                cluster,
+                cluster: props.cluster,
                 loadBalancer: props.alb,
                 desiredCount: 1,
                 certificate: Certificate.fromCertificateArn(
@@ -72,7 +59,7 @@ export class WebSystemStack extends cdk.Stack {
                         ? SubnetType.PUBLIC
                         : SubnetType.PRIVATE_WITH_NAT,
                 },
-                securityGroups: [webInstanceSg],
+                securityGroups: [props.webInstanceSg],
             }
         );
 

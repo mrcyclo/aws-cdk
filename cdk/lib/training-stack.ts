@@ -1,5 +1,6 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
+import { Cluster } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
 import {
     PolicyDocument,
@@ -13,6 +14,8 @@ export class TrainingStack extends cdk.Stack {
     public readonly vpc: Vpc;
     public readonly alb: ApplicationLoadBalancer;
     public readonly albSg: SecurityGroup;
+    public readonly cluster: Cluster;
+    public readonly webInstanceSg: SecurityGroup;
 
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
@@ -46,7 +49,7 @@ export class TrainingStack extends cdk.Stack {
         this.albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
 
         // Create Application Load Balancer
-        const alb = new ApplicationLoadBalancer(this, "alb", {
+        this.alb = new ApplicationLoadBalancer(this, "alb", {
             vpc: this.vpc,
             internetFacing: true,
             securityGroup: this.albSg,
@@ -55,6 +58,18 @@ export class TrainingStack extends cdk.Stack {
                 onePerAz: true,
             },
         });
+
+        // Create cluster
+        this.cluster = new Cluster(this, "cluster", {
+            vpc: this.vpc,
+        });
+
+        // Create web instance sg
+        this.webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
+            vpc: this.vpc,
+            allowAllOutbound: true,
+        });
+        this.webInstanceSg.connections.allowFrom(this.albSg, Port.tcp(80));
 
         // Create code build project
         new Project(this, "codebuild", {
@@ -69,17 +84,15 @@ export class TrainingStack extends cdk.Stack {
                             `
                             if [$IMAGE_TAG = '']
                             then
-                                export VERSION=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
+                                export IMAGE_TAG=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
                                 cd web
                                 aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com
-                                docker build --build-arg VERSION=$VERSION -t laravel .
-                                docker tag laravel:latest 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION
-                                docker push 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION
-                                docker rmi 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$VERSION
+                                docker build --build-arg IMAGE_TAG=$IMAGE_TAG -t laravel .
+                                docker tag laravel:latest 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$IMAGE_TAG
+                                docker push 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$IMAGE_TAG
+                                docker rmi 903969887945.dkr.ecr.ap-southeast-1.amazonaws.com/laravel:$IMAGE_TAG
                                 docker rmi laravel:latest
                                 cd ..
-                            else
-                                export VERSION=$IMAGE_TAG
                             fi
                             `,
 

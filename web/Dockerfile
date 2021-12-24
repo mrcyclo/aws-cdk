@@ -13,7 +13,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --fil
 WORKDIR /var/www/html
 
 RUN composer create-project laravel/laravel . && \
-    echo $VERSION > /var/www/html/resources/views/welcome.blade.php && \
+    echo $IMAGE_TAG > /var/www/html/resources/views/welcome.blade.php && \
     chown -R :apache /var/www/html && \
     chmod 2775 /var/www/html && \
     chown -R :apache storage && \

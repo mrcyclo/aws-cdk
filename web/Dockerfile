@@ -1,5 +1,7 @@
 FROM amazonlinux:2
 
+ARG IMAGE_TAG
+
 RUN amazon-linux-extras enable php7.4 epel && yum clean metadata
 
 RUN yum install -y unzip curl httpd php php-common php-pgsql php-curl php-gd php-mbstring php-xmlrpc php-intl php-zlib php-bcmath php-xml && \
@@ -13,7 +15,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --fil
 WORKDIR /var/www/html
 
 RUN composer create-project laravel/laravel . && \
-    echo $IMAGE_TAG > /var/www/html/resources/views/welcome.blade.php && \
+    echo "<h1>$IMAGE_TAG</h1>" > /var/www/html/resources/views/welcome.blade.php && \
     chown -R :apache /var/www/html && \
     chmod 2775 /var/www/html && \
     chown -R :apache storage && \

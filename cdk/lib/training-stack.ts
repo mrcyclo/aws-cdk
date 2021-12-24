@@ -82,7 +82,7 @@ export class TrainingStack extends cdk.Stack {
                             "git clone https://github.com/mrcyclo/aws-cdk.git .",
 
                             `
-                            if [$IMAGE_TAG = '']
+                            if [ -z "$IMAGE_TAG" ]
                             then
                                 export IMAGE_TAG=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
                                 cd web

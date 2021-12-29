@@ -87,7 +87,7 @@ export class TrainingStack extends cdk.Stack {
 
         // Create ECR
         this.ecr = new Repository(this, "Repository", {
-            repositoryName: "LaravelImageRepository",
+            repositoryName: "laravel-image-repository",
         });
 
         // Create code build project

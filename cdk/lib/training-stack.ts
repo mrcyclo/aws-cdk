@@ -90,9 +90,6 @@ export class TrainingStack extends cdk.Stack {
             repositoryName: "LaravelImageRepository",
         });
 
-        // Create Artifact (?)
-        const sourceOutput = new Artifact();
-
         // Create code build project
         const codebuild = new Project(this, "Codebuild", {
             buildSpec: BuildSpec.fromObject({
@@ -106,13 +103,14 @@ export class TrainingStack extends cdk.Stack {
                             `
                             if [ -z "$IMAGE_TAG" ]
                             then
+                                export REPOSITORY_URI=$(aws cloudformation describe-stacks --stack-name training-stack --output text --query="Stacks[0].Outputs[?OutputKey=='RepositoryUri'].OutputValue")
                                 export IMAGE_TAG=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
                                 cd web
-                                aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${this.ecr.repositoryUri}
+                                aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
                                 docker build --build-arg IMAGE_TAG -t laravel .
-                                docker tag laravel:latest ${this.ecr.repositoryUri}:$IMAGE_TAG
-                                docker push ${this.ecr.repositoryUri}:$IMAGE_TAG
-                                docker rmi ${this.ecr.repositoryUri}:$IMAGE_TAG
+                                docker tag laravel:latest $REPOSITORY_URI:$IMAGE_TAG
+                                docker push $REPOSITORY_URI:$IMAGE_TAG
+                                docker rmi $REPOSITORY_URI:$IMAGE_TAG
                                 docker rmi laravel:latest
                                 cd ..
                             fi
@@ -167,6 +165,9 @@ export class TrainingStack extends cdk.Stack {
             }),
         });
 
+        // Create CodePipeline
+        const sourceOutput = new Artifact();
+
         new Pipeline(this, "GitPushMaster", {
             pipelineName: "GitPushMaster",
             crossAccountKeys: false,
@@ -191,6 +192,12 @@ export class TrainingStack extends cdk.Stack {
                     ],
                 },
             ],
+        });
+
+        // 👇 create an Output
+        new cdk.CfnOutput(this, "RepositoryUri", {
+            value: this.ecr.repositoryUri,
+            exportName: "RepositoryUri",
         });
     }
 }

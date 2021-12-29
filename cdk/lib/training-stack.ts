@@ -184,6 +184,11 @@ export class TrainingStack extends cdk.Stack {
                             output: sourceOutput,
                             oauthToken: SecretValue.plainText(githubOAuthToken),
                         }),
+                    ],
+                },
+                {
+                    stageName: "CodeBuild",
+                    actions: [
                         new CodeBuildAction({
                             actionName: "CodeBuild",
                             input: sourceOutput,

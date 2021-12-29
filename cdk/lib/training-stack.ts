@@ -1,11 +1,12 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
+import { Repository as CodecommitRepository } from "@aws-cdk/aws-codecommit";
 import { Artifact, Pipeline } from "@aws-cdk/aws-codepipeline";
 import {
     CodeBuildAction,
-    GitHubSourceAction,
+    CodeCommitSourceAction,
 } from "@aws-cdk/aws-codepipeline-actions";
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
-import { Repository } from "@aws-cdk/aws-ecr";
+import { Repository as EcrRepository } from "@aws-cdk/aws-ecr";
 import { Cluster } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancer } from "@aws-cdk/aws-elasticloadbalancingv2";
 import {
@@ -15,7 +16,6 @@ import {
     ServicePrincipal,
 } from "@aws-cdk/aws-iam";
 import * as cdk from "@aws-cdk/core";
-import { SecretValue } from "@aws-cdk/core";
 
 export class TrainingStack extends cdk.Stack {
     public readonly vpc: Vpc;
@@ -23,7 +23,7 @@ export class TrainingStack extends cdk.Stack {
     public readonly albSg: SecurityGroup;
     public readonly cluster: Cluster;
     public readonly webInstanceSg: SecurityGroup;
-    public readonly ecr: Repository;
+    public readonly ecr: EcrRepository;
 
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
@@ -86,7 +86,7 @@ export class TrainingStack extends cdk.Stack {
         this.webInstanceSg.connections.allowFrom(this.albSg, Port.tcp(80));
 
         // Create ECR
-        this.ecr = new Repository(this, "Repository", {
+        this.ecr = new EcrRepository(this, "Repository", {
             repositoryName: "laravel-image-repository",
         });
 
@@ -177,13 +177,15 @@ export class TrainingStack extends cdk.Stack {
                 {
                     stageName: "Source",
                     actions: [
-                        new GitHubSourceAction({
-                            actionName: "GithubSource",
-                            owner: "mrcyclo",
-                            repo: "aws-cdk",
-                            branch: "master",
+                        new CodeCommitSourceAction({
+                            actionName: "CodeCommitSource",
+                            repository: CodecommitRepository.fromRepositoryName(
+                                this,
+                                "LaravelRepo",
+                                "laravel-repo"
+                            ),
                             output: sourceOutput,
-                            oauthToken: SecretValue.plainText(githubOAuthToken),
+                            branch: "master",
                         }),
                     ],
                 },

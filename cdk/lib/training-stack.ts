@@ -1,4 +1,9 @@
 import { BuildSpec, LinuxBuildImage, Project } from "@aws-cdk/aws-codebuild";
+import { Artifact, Pipeline } from "@aws-cdk/aws-codepipeline";
+import {
+    CodeBuildAction,
+    GitHubSourceAction,
+} from "@aws-cdk/aws-codepipeline-actions";
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from "@aws-cdk/aws-ec2";
 import { Repository } from "@aws-cdk/aws-ecr";
 import { Cluster } from "@aws-cdk/aws-ecs";
@@ -10,6 +15,7 @@ import {
     ServicePrincipal,
 } from "@aws-cdk/aws-iam";
 import * as cdk from "@aws-cdk/core";
+import { SecretValue } from "@aws-cdk/core";
 
 export class TrainingStack extends cdk.Stack {
     public readonly vpc: Vpc;
@@ -22,8 +28,10 @@ export class TrainingStack extends cdk.Stack {
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
+        const githubOAuthToken = <string>process.env.GITHUB_OAUTH_TOKEN;
+
         // Create VPC
-        this.vpc = new Vpc(this, "vpc", {
+        this.vpc = new Vpc(this, "Vpc", {
             cidr: "13.0.0.0/16",
             maxAzs: 2,
             natGateways: process.env.DEBUG ? 0 : 1,
@@ -32,27 +40,27 @@ export class TrainingStack extends cdk.Stack {
                     subnetType: process.env.DEBUG
                         ? SubnetType.PUBLIC
                         : SubnetType.PRIVATE_WITH_NAT,
-                    name: "private-subnet",
+                    name: "PrivateSubnet",
                     cidrMask: 24,
                 },
                 {
                     subnetType: SubnetType.PUBLIC,
-                    name: "public-subnet",
+                    name: "PublicSubnet",
                     cidrMask: 24,
                 },
             ],
         });
 
         // Create Alb sg
-        this.albSg = new SecurityGroup(this, "alb-sg", {
+        this.albSg = new SecurityGroup(this, "AlbSg", {
             vpc: this.vpc,
             allowAllOutbound: true,
-            securityGroupName: "alb-sg",
+            securityGroupName: "AlbSg",
         });
         this.albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(80));
 
         // Create Application Load Balancer
-        this.alb = new ApplicationLoadBalancer(this, "alb", {
+        this.alb = new ApplicationLoadBalancer(this, "Alb", {
             vpc: this.vpc,
             internetFacing: true,
             securityGroup: this.albSg,
@@ -60,37 +68,40 @@ export class TrainingStack extends cdk.Stack {
                 subnetType: SubnetType.PUBLIC,
                 onePerAz: true,
             },
-            loadBalancerName: "alb",
+            loadBalancerName: "Alb",
         });
 
         // Create cluster
-        this.cluster = new Cluster(this, "cluster", {
+        this.cluster = new Cluster(this, "Cluster", {
             vpc: this.vpc,
-            clusterName: "cluster",
+            clusterName: "Cluster",
         });
 
         // Create web instance sg
-        this.webInstanceSg = new SecurityGroup(this, "web-instance-sg", {
+        this.webInstanceSg = new SecurityGroup(this, "WebInstanceSg", {
             vpc: this.vpc,
             allowAllOutbound: true,
-            securityGroupName: "web-instance-sg",
+            securityGroupName: "WebInstanceSg",
         });
         this.webInstanceSg.connections.allowFrom(this.albSg, Port.tcp(80));
 
         // Create ECR
         this.ecr = new Repository(this, "Repository", {
-            repositoryName: "laravel-image",
+            repositoryName: "LaravelImageRepository",
         });
 
+        // Create Artifact (?)
+        const sourceOutput = new Artifact();
+
         // Create code build project
-        new Project(this, "codebuild", {
+        const codebuild = new Project(this, "Codebuild", {
             buildSpec: BuildSpec.fromObject({
                 version: "0.2",
                 phases: {
                     build: {
                         commands: [
                             "apt update -y",
-                            "git clone https://github.com/mrcyclo/aws-cdk.git .",
+                            // "git clone https://github.com/mrcyclo/aws-cdk.git .",
 
                             `
                             if [ -z "$IMAGE_TAG" ]
@@ -129,11 +140,11 @@ export class TrainingStack extends cdk.Stack {
 
                 IMAGE_TAG: { value: "" },
             },
-            projectName: "websystem-build",
-            role: new Role(this, "codebuild-role", {
+            projectName: "WebsystemBuild",
+            role: new Role(this, "CodebuildRole", {
                 assumedBy: new ServicePrincipal("codebuild.amazonaws.com"),
                 inlinePolicies: {
-                    "codebuild-policies": new PolicyDocument({
+                    CodebuildPolicies: new PolicyDocument({
                         statements: [
                             new PolicyStatement({
                                 actions: [
@@ -154,6 +165,32 @@ export class TrainingStack extends cdk.Stack {
                     }),
                 },
             }),
+        });
+
+        new Pipeline(this, "GitPushMaster", {
+            pipelineName: "GitPushMaster",
+            crossAccountKeys: false,
+            enableKeyRotation: false,
+            stages: [
+                {
+                    stageName: "Source",
+                    actions: [
+                        new GitHubSourceAction({
+                            actionName: "GithubSource",
+                            owner: "mrcyclo",
+                            repo: "aws-cdk",
+                            branch: "master",
+                            output: sourceOutput,
+                            oauthToken: SecretValue.plainText(githubOAuthToken),
+                        }),
+                        new CodeBuildAction({
+                            actionName: "CodeBuild",
+                            input: sourceOutput,
+                            project: codebuild,
+                        }),
+                    ],
+                },
+            ],
         });
     }
 }

@@ -46,10 +46,10 @@ export class WebSystemStack extends cdk.Stack {
                 assignPublicIp: true,
                 taskImageOptions: {
                     image: ContainerImage.fromEcrRepository(
-                        Repository.fromRepositoryArn(
+                        Repository.fromRepositoryName(
                             this,
-                            "laravel-image",
-                            props.ecr.repositoryArn
+                            "LaravelImage",
+                            props.ecr.repositoryName
                         ),
                         imageTag
                     ),

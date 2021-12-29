@@ -98,7 +98,7 @@ export class TrainingStack extends cdk.Stack {
                     build: {
                         commands: [
                             "apt update -y",
-                            // "git clone https://github.com/mrcyclo/aws-cdk.git .",
+                            "git clone https://github.com/mrcyclo/aws-cdk.git .",
 
                             `
                             if [ -z "$IMAGE_TAG" ]

@@ -5,7 +5,7 @@ import { Cluster, ContainerImage } from "@aws-cdk/aws-ecs";
 import { ApplicationLoadBalancedFargateService } from "@aws-cdk/aws-ecs-patterns";
 import {
     ApplicationLoadBalancer,
-    ApplicationProtocol
+    ApplicationProtocol,
 } from "@aws-cdk/aws-elasticloadbalancingv2";
 import * as cdk from "@aws-cdk/core";
 import { Duration } from "@aws-cdk/core";
@@ -16,6 +16,7 @@ interface WebSystemStackProps extends cdk.StackProps {
     albSg: SecurityGroup;
     cluster: Cluster;
     webInstanceSg: SecurityGroup;
+    ecr: Repository;
 }
 
 export class WebSystemStack extends cdk.Stack {
@@ -45,10 +46,10 @@ export class WebSystemStack extends cdk.Stack {
                 assignPublicIp: true,
                 taskImageOptions: {
                     image: ContainerImage.fromEcrRepository(
-                        Repository.fromRepositoryName(
+                        Repository.fromRepositoryArn(
                             this,
-                            "laravel",
-                            "laravel"
+                            "laravel-image",
+                            props.ecr.repositoryArn
                         ),
                         imageTag
                     ),
@@ -60,6 +61,7 @@ export class WebSystemStack extends cdk.Stack {
                         : SubnetType.PRIVATE_WITH_NAT,
                 },
                 securityGroups: [props.webInstanceSg],
+                serviceName: "alb-service",
             }
         );
 

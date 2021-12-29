@@ -23,4 +23,5 @@ new WebSystemStack(app, "websystem-stack", {
     albSg: trainingStack.albSg,
     cluster: trainingStack.cluster,
     webInstanceSg: trainingStack.webInstanceSg,
+    ecr: trainingStack.ecr,
 });

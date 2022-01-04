@@ -110,6 +110,9 @@ export class TrainingStack extends cdk.Stack {
                                 export IMAGE_TAG=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
                                 cd web
                                 cp -aR $SOURCE_DIR ./src
+                                cd src
+                                ls -la
+                                cd ..
                                 aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
                                 docker build -t laravel .
                                 docker tag laravel:latest $REPOSITORY_URI:$IMAGE_TAG

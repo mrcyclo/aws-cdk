@@ -108,8 +108,8 @@ export class TrainingStack extends cdk.Stack {
                             then
                                 export REPOSITORY_URI=$(aws cloudformation describe-stacks --stack-name training-stack --output text --query="Stacks[0].Outputs[?OutputKey=='RepositoryUri'].OutputValue")
                                 export IMAGE_TAG=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
-                                cd web
-                                cp -aR $SOURCE_DIR ./src
+                                cd we
+                                cp -aR $SOURCE_DIR/. src
                                 cd src
                                 ls -la
                                 cd ..

@@ -98,6 +98,7 @@ export class TrainingStack extends cdk.Stack {
                     build: {
                         commands: [
                             "apt update -y",
+                            "ls -la",
                             "git clone https://github.com/mrcyclo/aws-cdk.git .",
 
                             `
@@ -184,8 +185,9 @@ export class TrainingStack extends cdk.Stack {
                                 "LaravelRepo",
                                 "laravel-repo"
                             ),
-                            output: sourceOutput,
                             branch: "master",
+                            output: sourceOutput,
+                            codeBuildCloneOutput: true,
                         }),
                     ],
                 },

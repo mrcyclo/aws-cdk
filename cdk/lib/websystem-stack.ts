@@ -60,7 +60,7 @@ export class WebSystemStack extends cdk.Stack {
                         ? SubnetType.PUBLIC
                         : SubnetType.PRIVATE_WITH_NAT,
                 },
-                securityGroups: [props.webInstanceSg],
+                // securityGroups: [props.webInstanceSg],
                 serviceName: "alb-service",
             }
         );

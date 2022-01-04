@@ -108,11 +108,8 @@ export class TrainingStack extends cdk.Stack {
                             then
                                 export REPOSITORY_URI=$(aws cloudformation describe-stacks --stack-name training-stack --output text --query="Stacks[0].Outputs[?OutputKey=='RepositoryUri'].OutputValue")
                                 export IMAGE_TAG=$(date +\\%Y\\%m\\%d\\%H\\%M\\%S)
-                                cd we
-                                cp -aR $SOURCE_DIR/. src
-                                cd src
-                                ls -la
-                                cd ..
+                                cd web
+                                cp -a $SOURCE_DIR/. src
                                 aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
                                 docker build -t laravel .
                                 docker tag laravel:latest $REPOSITORY_URI:$IMAGE_TAG
